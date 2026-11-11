@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarea Fina — adiviná el tema y el disco</title>
+<meta name="description" content="Juego para jugar entre amigos: adiviná de qué tema y de qué disco de Los Redondos y Los Fundamentalistas es cada frase.">
+<meta name="theme-color" content="#17120F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Caveat:wght@600;700&family=Stardos+Stencil:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#17120F;
+    --ink-2:#241D18;
+    --ink-3:#332A22;
+    --paper:#F1E6D3;
+    --paper-2:#E6D6B8;
+    --ricota:#E4436B;
+    --ricota-dim:#7A2438;
+    --naranja:#F0932B;
+    --naranja-dim:#7A4B15;
+    --tinta:#2C7DA0;
+    --grafito:#2B2622;
+    --hueso:#FBF6EC;
+    --hueso-dim:#C9BCA9;
+    --sangre:#A32B24;
+    --ocre:#C9932F;
+    --torn: polygon(
+      0% 2%, 4% 0%, 9% 1.6%, 15% 0.3%, 21% 1.8%, 28% 0.2%, 34% 1.4%, 41% 0%, 48% 1.7%,
+      55% 0.4%, 62% 1.9%, 69% 0.1%, 76% 1.5%, 83% 0.3%, 90% 1.8%, 96% 0.2%, 100% 1.6%,
+      100% 97%, 96% 100%, 90% 98.3%, 84% 100%, 77% 98.4%, 70% 100%, 63% 98.2%, 56% 100%,
+      49% 98.5%, 42% 100%, 35% 98.1%, 28% 100%, 21% 98.6%, 14% 100%, 7% 98.2%, 0% 100%
+    );
+  }
+
+  *{box-sizing:border-box;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+
+  html,body{margin:0;padding:0;}
+
+  body{
+    position:relative;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(163,43,36,0.14), transparent 55%),
+      radial-gradient(ellipse at 50% 110%, rgba(0,0,0,0.55), transparent 60%),
+      var(--ink);
+    color:var(--hueso);
+    font-family:'Space Mono', monospace;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:0.06;
+    mix-blend-mode:overlay;
+    pointer-events:none;
+  }
+
+  .app{
+    position:relative;
+    width:100%;
+    max-width:460px;
+    min-height:100vh;
+    padding:18px 16px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    padding-bottom:12px;
+    border-bottom:2px dashed var(--ink-3);
+  }
+
+  .brand h1{
+    font-family:'Stardos Stencil', 'Big Shoulders Display', sans-serif;
+    font-weight:700;
+    font-size:30px;
+    line-height:0.95;
+    letter-spacing:1px;
+    margin:0;
+    color:var(--hueso);
+    text-transform:uppercase;
+    text-shadow:2px 2px 0 rgba(228,67,107,0.35);
+  }
+  .brand h1 span{color:var(--ricota);}
+  .brand p{
+    margin:6px 0 0;
+    font-family:'Caveat', cursive;
+    font-size:18px;
+    color:var(--hueso-dim);
+    transform:rotate(-1deg);
+  }
+
+  .icon-btn{
+    flex:0 0 auto;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:2px solid var(--hueso-dim);
+    background:transparent;
+    color:var(--hueso);
+    font-size:20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .icon-btn:hover{border-color:var(--ricota); color:var(--ricota); transform:rotate(90deg);}
+  .icon-btn:focus-visible{outline:2px solid var(--ricota); outline-offset:2px;}
+
+  /* ---------- Chips ---------- */
+  .chips{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:8px 12px;
+    border-radius:3px;
+    border:2.5px solid var(--ink-3);
+    background:var(--ink-2);
+    color:var(--hueso-dim);
+    cursor:pointer;
+    transition:all .15s ease;
+    display:flex; align-items:center; gap:6px;
+  }
+  .chip .dot{width:7px;height:7px;background:currentColor;opacity:.6;}
+  .chip.active{color:var(--ink); background:var(--hueso); border-color:var(--ink);}
+  .chip.tag-redondos.active{background:var(--ricota); border-color:var(--ink); color:var(--hueso);}
+  .chip.tag-fundamentalistas.active{background:var(--naranja); border-color:var(--ink); color:var(--ink);}
+  .chip:focus-visible{outline:2px solid var(--ricota); outline-offset:2px;}
+  .chip[disabled]{opacity:.35; cursor:not-allowed;}
+
+  /* ---------- Flyer card ---------- */
+  .stage{
+    position:relative;
+    padding:28px 10px 14px;
+  }
+
+  .stage::before{
+    content:"";
+    position:absolute;
+    top:20px; left:0; right:0; bottom:6px;
+    background:var(--sangre);
+    transform:rotate(-3.4deg);
+    clip-path: var(--torn);
+    z-index:0;
+  }
+
+  .flyer{
+    position:relative;
+    z-index:1;
+    background:
+      radial-gradient(rgba(43,38,34,0.10) 1px, transparent 1.1px) 0 0/10px 10px,
+      var(--paper);
+    color:var(--grafito);
+    padding:34px 24px 26px;
+    min-height:230px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:14px;
+    transform:rotate(-1.1deg);
+    box-shadow: 0 18px 30px -14px rgba(0,0,0,0.6), 0 2px 0 rgba(0,0,0,0.25);
+    clip-path: var(--torn);
+  }
+
+  .tape{
+    position:absolute;
+    z-index:2;
+    width:64px; height:26px;
+    background:linear-gradient(120deg, rgba(237,222,188,0.65), rgba(237,222,188,0.32));
+    box-shadow:0 2px 4px rgba(0,0,0,0.25);
+    opacity:0.85;
+  }
+  .tape.tl{top:-10px; left:18px; transform:rotate(-8deg);}
+  .tape.br{bottom:-10px; right:14px; transform:rotate(6deg);}
+
+  .band-tag{
+    align-self:flex-start;
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight:800;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    padding:4px 10px;
+    border:2px solid var(--grafito);
+    color:var(--grafito);
+  }
+  .band-tag.redondos{border-color:var(--ricota-dim); color:var(--ricota-dim);}
+  .band-tag.fundamentalistas{border-color:var(--naranja-dim); color:var(--naranja-dim);}
+
+  .frase-texto{
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-style:italic;
+    font-size:22px;
+    line-height:1.32;
+    margin:0;
+  }
+  .frase-texto::before{content:"“";} 
+  .frase-texto::after{content:"”";}
+
+  .flyer .meta-count{
+    font-family:'Caveat', cursive;
+    font-size:16px;
+    color:#5c5145;
+    transform:rotate(-1deg);
+  }
+
+  .reveal{
+    margin-top:4px;
+    border-top:2px dashed rgba(43,38,34,0.35);
+    padding-top:12px;
+    display:none;
+    flex-direction:column;
+    gap:2px;
+  }
+  .reveal.show{display:flex; animation:stampDown .28s cubic-bezier(.2,1.4,.4,1);}
+  @keyframes stampDown{
+    0%{opacity:0; transform:scale(1.5) rotate(6deg);}
+    70%{opacity:1; transform:scale(0.96) rotate(-2deg);}
+    100%{opacity:1; transform:scale(1) rotate(-1deg);}
+  }
+  .reveal .cancion{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight:900;
+    font-size:24px;
+    text-transform:uppercase;
+    color:var(--sangre);
+    line-height:1;
+  }
+  .reveal .disco{
+    font-size:14px;
+    color:#5c5145;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding:20px 10px;
+    font-size:14px;
+    color:#5c5145;
+    line-height:1.6;
+  }
+  .empty-state b{color:var(--grafito);}
+
+  /* ---------- Buttons ---------- */
+  .actions{display:flex; flex-direction:column; gap:10px;}
+  .btn{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight:800;
+    font-size:19px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:14px 18px;
+    border-radius:3px;
+    border:2.5px solid var(--ink);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn:focus-visible{outline:3px solid var(--hueso); outline-offset:2px;}
+  .btn-primary{background:var(--ricota); color:var(--hueso);}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-secondary{background:transparent; color:var(--hueso); border-color:var(--ink-3);}
+  .btn-secondary:hover{border-color:var(--hueso-dim);}
+  .btn[disabled]{opacity:.4; cursor:not-allowed;}
+
+  /* ---------- Score ---------- */
+  .score{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:var(--ink-2);
+    border:2px solid var(--ink-3);
+    border-radius:10px;
+    padding:14px;
+  }
+  .score-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .score-team{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:12px 8px;
+    border-radius:10px;
+    border:2px solid var(--ink-3);
+    background:var(--ink);
+  }
+  .score-team.team-a{border-color:var(--ricota-dim);}
+  .score-team.team-b{border-color:var(--naranja-dim);}
+  .score-team .label{font-size:12px; color:var(--hueso-dim); text-transform:uppercase; letter-spacing:.05em;}
+  .score-team .num{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:40px; line-height:1;}
+  .score-team.team-a .num{color:var(--ricota);}
+  .score-team.team-b .num{color:var(--naranja);}
+  .score-team .btnrow{display:flex; gap:10px;}
+  .score-team button{
+    width:44px; height:44px; border-radius:10px; border:2px solid var(--ink-3);
+    background:transparent; color:var(--hueso); cursor:pointer; font-size:20px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .score-team.team-a button:hover{border-color:var(--ricota); color:var(--ricota);}
+  .score-team.team-b button:hover{border-color:var(--naranja); color:var(--naranja);}
+  .score-team button:active{transform:scale(0.94);}
+  .score-team button:focus-visible{outline:2px solid var(--hueso); outline-offset:2px;}
+  .score-reset{
+    align-self:center;
+    background:none; border:none; color:var(--hueso-dim);
+    font-family:'Space Mono',monospace; font-size:12px; text-decoration:underline; cursor:pointer;
+    padding:6px 10px;
+  }
+
+  /* ---------- Footer stats ---------- */
+  .stats{
+    text-align:center;
+    font-size:12px;
+    color:var(--hueso-dim);
+    letter-spacing:.03em;
+  }
+
+  /* ---------- Sheet (add phrase) ---------- */
+  .sheet-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6);
+    display:none; z-index:20;
+    justify-content:center;
+  }
+  .sheet-overlay.open{display:flex;}
+  .sheet{
+    width:100%; max-width:460px;
+    background:var(--ink);
+    border-top:3px solid var(--ricota);
+    margin-top:auto;
+    max-height:90vh;
+    overflow-y:auto;
+    padding:18px 18px 28px;
+    border-radius:14px 14px 0 0;
+  }
+  .sheet h2{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight:900;
+    text-transform:uppercase;
+    font-size:26px;
+    margin:0 0 4px;
+  }
+  .sheet .sub{color:var(--hueso-dim); font-size:13px; margin:0 0 18px; line-height:1.5;}
+
+  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
+  .field label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--hueso-dim);}
+  select, textarea{
+    font-family:'Space Mono', monospace;
+    font-size:14px;
+    background:var(--ink-2);
+    color:var(--hueso);
+    border:2px solid var(--ink-3);
+    border-radius:6px;
+    padding:10px 12px;
+    width:100%;
+  }
+  select:focus-visible, textarea:focus-visible{outline:2px solid var(--ricota);}
+  textarea{resize:vertical; min-height:70px; line-height:1.4;}
+
+  .close-btn{
+    background:none; border:none; color:var(--hueso-dim); font-size:26px; line-height:1;
+    position:absolute; top:14px; right:16px; cursor:pointer;
+  }
+  .sheet{position:relative;}
+
+  .divider{border:none; border-top:2px dashed var(--ink-3); margin:22px 0 14px;}
+
+  .bank-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;}
+  .bank-head h3{font-family:'Big Shoulders Display', sans-serif; font-size:18px; text-transform:uppercase; margin:0;}
+  .bank-head span{font-size:12px; color:var(--hueso-dim);}
+
+  .backup-hint{font-size:12px; color:var(--hueso-dim); line-height:1.5; margin:0 0 10px;}
+
+  .import-box{
+    background:var(--ink-2);
+    border:2.5px solid var(--ocre);
+    border-radius:8px;
+    padding:14px 14px 12px;
+    margin:14px 0 4px;
+  }
+  .import-box .bank-head{margin-bottom:6px;}
+  .import-box .bank-head h3{color:var(--ocre);}
+  .import-box .backup-hint{margin-bottom:8px;}
+  .backup-btn-row{display:flex; gap:10px; margin-top:8px;}
+  .backup-btn-row .btn{flex:1; padding:12px 10px; font-size:16px;}
+  .btn-update{background:var(--ocre); color:var(--ink);}
+  .btn-update:hover{filter:brightness(1.08);}
+  .backup-warning{margin:8px 0 0; font-size:11px; color:var(--ocre);}
+
+  .bank-list{display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto;}
+  .bank-item{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+    background:var(--ink-2); border:1px solid var(--ink-3); border-radius:8px;
+    padding:9px 11px;
+  }
+  .bank-item .txt{font-size:12.5px; line-height:1.45;}
+  .bank-item .txt .q{font-style:italic; color:var(--hueso);}
+  .bank-item .txt .meta{display:block; color:var(--hueso-dim); margin-top:2px; font-size:11px;}
+  .bank-item button{
+    flex:0 0 auto; background:none; border:none; color:var(--hueso-dim); cursor:pointer; font-size:16px;
+  }
+  .bank-item button:hover{color:var(--ricota);}
+  .bank-empty{font-size:12.5px; color:var(--hueso-dim); text-align:center; padding:14px 0;}
+
+  .toast{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    background:var(--hueso); color:var(--ink); font-family:'Space Mono',monospace; font-size:13px;
+    padding:10px 16px; border-radius:8px; opacity:0; pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease; z-index:40;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+
+  @media (max-width:360px){
+    .brand h1{font-size:25px;}
+    .frase-texto{font-size:19px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <h1>TAREA <span>FINA</span></h1>
+      <p>adiviná el tema y el disco</p>
+    </div>
+    <button class="icon-btn" id="openAdd" title="Agregar frase" aria-label="Agregar frase">＋</button>
+  </header>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="stage">
+    <div class="tape tl"></div>
+    <div class="flyer" id="flyer">
+      <div class="band-tag" id="bandTag">—</div>
+      <p class="frase-texto" id="fraseTexto">Todavía no hay frases cargadas</p>
+      <div class="meta-count" id="metaCount"></div>
+      <div class="reveal" id="reveal">
+        <div class="cancion" id="revCancion"></div>
+        <div class="disco" id="revDisco"></div>
+      </div>
+    </div>
+    <div class="tape br"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btnRevelar">Revelar</button>
+    <button class="btn btn-secondary" id="btnSiguiente">🎲 Otra frase</button>
+  </div>
+
+  <div class="score">
+    <div class="score-grid">
+      <div class="score-team team-a">
+        <span class="label">Equipo A</span>
+        <span class="num" id="scoreA">0</span>
+        <div class="btnrow">
+          <button data-team="a" data-delta="-1" aria-label="Restar punto a Equipo A">–</button>
+          <button data-team="a" data-delta="1" aria-label="Sumar punto a Equipo A">+</button>
+        </div>
+      </div>
+      <div class="score-team team-b">
+        <span class="label">Equipo B</span>
+        <span class="num" id="scoreB">0</span>
+        <div class="btnrow">
+          <button data-team="b" data-delta="-1" aria-label="Restar punto a Equipo B">–</button>
+          <button data-team="b" data-delta="1" aria-label="Sumar punto a Equipo B">+</button>
+        </div>
+      </div>
+    </div>
+    <button class="score-reset" id="scoreReset">reiniciar marcador</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+</div>
+
+<div class="sheet-overlay" id="sheetOverlay">
+  <div class="sheet">
+    <button class="close-btn" id="closeAdd" aria-label="Cerrar">×</button>
+    <h2>Agregar frase</h2>
+    <p class="sub">Elegí banda, disco y canción, y pegá la frase tal cual (vos la sabés de memoria o la sacás de tu disco/streaming — la app no trae letras cargadas).</p>
+
+    <div class="import-box">
+      <div class="bank-head">
+        <h3>Backup</h3>
+        <span>editable</span>
+      </div>
+      <p class="backup-hint">Esta caja es tu banco de frases en texto (Banda, Disco, Año, Canción, Frase, separados por tabulaciones — una fila por frase). Podés editarla a mano, o pegar encima un backup copiado en otro dispositivo. Tocá "Copiar" para sacar una copia, o "Actualizar" para que el banco de este dispositivo pase a ser exactamente lo que hay escrito acá.</p>
+      <textarea id="backupText" style="min-height:130px; font-size:11px;"></textarea>
+      <div class="backup-btn-row">
+        <button class="btn btn-primary" id="btnCopiar">Copiar</button>
+        <button class="btn btn-update" id="btnActualizar">Actualizar</button>
+      </div>
+      <p class="backup-hint backup-warning">"Actualizar" reemplaza las frases de este dispositivo por lo que esté escrito arriba. Las frases base del juego (las del repo) siempre se mantienen. Lo que agregues acá queda solo en este dispositivo.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="field">
+      <label for="selBanda">Banda</label>
+      <select id="selBanda"></select>
+    </div>
+    <div class="field">
+      <label for="selDisco">Disco</label>
+      <select id="selDisco"></select>
+    </div>
+    <div class="field">
+      <label for="selCancion">Canción</label>
+      <select id="selCancion"></select>
+    </div>
+    <div class="field">
+      <label for="txtFrase">Frase</label>
+      <textarea id="txtFrase" placeholder="Escribí acá la frase de la canción…"></textarea>
+    </div>
+    <button class="btn btn-primary" id="btnGuardar" style="width:100%;">Guardar frase</button>
+
+    <hr class="divider">
+
+    <div class="bank-head">
+      <h3>Mi banco de frases</h3>
+      <span id="bankCount">0 frases</span>
+    </div>
+    <div class="bank-list" id="bankList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- Discography data (facts only — no lyrics) ----------------
+  var DATA = {
+    redondos: {
+      label: "Los Redondos",
+      short: "Redondos",
+      albums: [
+        {name:"Gulp!", year:1985, songs:["Barbazul versus el amor letal","La bestia pop","Roto y mal parado","Pierre el vitricida","Unos pocos peligros sensatos","Yo no me caí del cielo","Te voy a atornillar","Superlógico","Ñam fri frufi fali fru","El infierno está encantador esta noche","Criminal mambo"]},
+        {name:"Oktubre", year:1986, songs:["Fuegos de octubre","Preso en mi ciudad","Música para pastillas","Semen-Up","Divina TV. Führer","Motorpsico","Ji Ji Ji","Canción para naufragios","Ya nadie va a escuchar tu remera"]},
+        {name:"Un Baión Para el Ojo Idiota", year:1988, songs:["Masacre en el puticlub","Noticias de ayer","Aquella solitaria vaca cubana","Todo preso es político","Vencedores vencidos","Vamos las bandas","Ella debe estar tan linda","Todo un palo"]},
+        {name:"¡Bang! ¡Bang!… Estás Liquidado", year:1989, songs:["Héroe del whisky","Rock para los dientes","La parabellum del buen psicópata","Un Pacman en el Savoy","Nadie es perfecto","Esa estrella era mi lujo","Maldición, va a ser un día hermoso","Ropa sucia","Nuestro amo juega al esclavo"]},
+        {name:"La Mosca y la Sopa", year:1991, songs:["Toxi-taxi","Fusilados por la Cruz Roja","Un poco de amor francés","Mi perro dinamita","Blues de la artillería","El pibe de los astilleros","Nueva Roma","Salando las heridas","Queso ruso"]},
+        {name:"En Directo", year:1992, songs:["Nuestro amo juega al esclavo","Barbazul versus el amor letal","Yo no me caí del cielo","Héroe del whisky","La parabellum del buen psicópata","Maldición, va a ser un día hermoso","El blues del noticiero","Todo un palo","Unos pocos peligros sensatos","Criminal mambo","Rock para los dientes","Vamos las bandas"]},
+        {name:"Lobo Suelto, Cordero Atado (Vol. 1 — Lobo Suelto)", year:1993, songs:["Invocación","Rock para el negro Atila","Sorpresa de Shangai","Shoping-Disco-Zen","Un Ángel para tu soledad","Buenas noticias","Susanita","Capricho Magyar","Espejismo","Gran ley","La hija del fletero","El lobo caído","Sushi"]},
+        {name:"Lobo Suelto, Cordero Atado (Vol. 2 — Cordero Atado)", year:1993, songs:["Yo caníbal","Ladrón de mi cerebro","¡Es hora de levantarse querido! ¿Dormiste bien?","Perdiendo el tiempo","Caña seca y un membrillo","Soga de Caín","Levi-Rap","El arte del buen comer","¡Lobo ¿estás?!","Botija rapado","San Telmo","Etiqueta negra"]},
+        {name:"Luzbelito", year:1996, songs:["Luzbelito y las sirenas","Cruz diablo!","Ella baila con todos","Fanfarria del cabrío","Nuotatori professionisti","Blues de la libertad","La dicha no es una cosa alegre","Me matan limón!","Rock yugular","Mariposa Pontiac (rock del país)","Juguetes perdidos"]},
+        {name:"Último Bondi a Finisterre", year:1998, songs:["Las increíbles andanzas del capitán Buscapina en Cybersiberia","Estás frito angelito","El árbol del gran bonete","Gualicho","Pogo","Alien duce","La pequeña novia del carioca","Drogocop","Scaramanzia","Esto es to-to-todo amigos!"]},
+        {name:"Momo Sampler", year:2000, songs:["Templo de Momo","Morta punto com","La murga de los renegados","Dr. Saturno","La murga de la virgencita","Pool, Averna y Papusa","Murga purga","Sheriff","Pensando como una acelga","Una piba con la remera de Greenpeace…","Rato molhado"]}
+      ]
+    },
+    fundamentalistas: {
+      label: "Los Fundamentalistas del Aire Acondicionado",
+      short: "Fundamentalistas",
+      albums: [
+        {name:"El Tesoro de los Inocentes (Bingo Fuel)", year:2004, songs:["Nike es cultura","Amnesia","El tesoro de los inocentes","La piba de Blockbuster","Tomasito, ¿podés oírme? ¿Tomasito, podés verme?","Mi caramel machiato","La muerte y yo","Adieu! Bye bye! Aufwiedersehen!","Pabellón séptimo (relato de Horacio)","El charro chino","Canción para un goldfish","Tsunami","To beef or not to beef","Ciudad Baigón"]},
+        {name:"Porco Rex", year:2007, songs:["Pedía siempre temas en la radio…","Ramas desnudas","Sopa de lágrimas (para el pibe Delete)","Te estás quedando sin balas de plata…","Tatuaje","Porco Rex","Veneno paciente","¿Porqué será que Dios no me quiere?","Y mientras tanto el sol se muere…","Martinis y tafiroles","Flight 956","Vuelo a Sidney","Bebamos de las copas lindas"]},
+        {name:"El Perfume de la Tempestad", year:2010, songs:["¡Todos a los botes!","No es Dios todo lo que reluce","Ceremonia durante la tormenta","Torito es muerto","Satelital","Chante Noire","Vino Mariani","ZZZZZZZ…..","El tábano en la oreja","Submarino soluble","Black Russian","Una rata muerta entre los geranios"]},
+        {name:"Pajaritos, Bravos Muchachitos", year:2013, songs:["A los pájaros que cantan sobre las selvas de internet","Beemedoblebe","A la luz de la luna","Las supersticiones traen mala suerte","Amok! Amok!","Chau Mohicano","Arca monster","Cada pequeña muerte","Babas del diablo","Había una vez…","Un par de fantasmas","La pajarita pechiblanca (Scherzo)"]},
+        {name:"El Ruiseñor, el Amor y la Muerte", year:2018, songs:["Pinturas de guerra","La oscuridad","El callejón de los milagros","El ruiseñor, el amor y la muerte","Strangerdanger","El martillo de las brujas (Malleus Maleficarum)","El tío Alberto en el día de la bicicleta","Canción para un terrorista bonito","La pequeña mamba","La moda no es vanguardia","A bailar que no hay infierno","La ciudad de los encandilados","Ostende Hotel","Panasonic y el mundo a sus pies","El que la seca la llena"]}
+      ]
+    }
+  };
+
+  var STORAGE_KEY = "tarea-fina-frases-v1";
+  var BASE_FILE = "data/frases.tsv";   // frases base del juego (las del repo)
+
+  // ---------------- State ----------------
+  var phrases = [];          // {id, banda, disco, anio, cancion, texto, base?} — base = viene del repo, solo lectura
+  var filtro = "todas";      // todas | redondos | fundamentalistas
+  var bag = [];               // indices left in current filtered set (into phrases)
+  var current = null;         // current phrase object
+  var revealed = false;
+  var score = {a:0, b:0};
+
+  // ---------------- Storage ----------------
+  // Las frases que agrega cada persona se guardan en su navegador (localStorage).
+  // Las frases base se leen siempre del archivo del repo y no se guardan acá.
+  function phraseKey(p){
+    return [p.banda, p.disco, p.cancion, String(p.texto).trim().toLowerCase()].join("|");
+  }
+
+  function loadLocalPhrases(){
+    try{
+      var raw = window.localStorage.getItem(STORAGE_KEY);
+      if(!raw) return [];
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){ return []; }
+  }
+
+  function loadBasePhrases(){
+    return fetch(BASE_FILE, {cache:"no-cache"})
+      .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+      .then(function(text){
+        return parseBackupTSV(text).map(function(r, i){
+          return { id:"base-"+i, banda:r.banda, disco:r.disco, anio:r.anio, cancion:r.cancion, texto:r.texto, base:true };
+        });
+      })
+      .catch(function(){ return []; });   // sin archivo (o abierto como file://): se juega solo con lo local
+  }
+
+  function savePhrases(){
+    var mine = phrases.filter(function(p){ return !p.base; });
+    try{
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(mine));
+      return true;
+    }catch(e){
+      console.error("No se pudo guardar", e);
+      showToast("No se pudo guardar en este navegador");
+      return false;
+    }
+  }
+
+  // ---------------- Backup: tabla lista para pegar en Excel/Sheets ----------------
+  function tsvEscape(v){
+    return String(v==null ? "" : v).replace(/\t/g, " ").replace(/\r?\n/g, " ");
+  }
+
+  function generateBackupTSV(){
+    var header = ["Banda","Disco","Año","Canción","Frase"].join("\t");
+    var rows = phrases.map(function(p){
+      return [tsvEscape(bandOf(p.banda)), tsvEscape(p.disco), tsvEscape(p.anio), tsvEscape(p.cancion), tsvEscape(p.texto)].join("\t");
+    });
+    return [header].concat(rows).join("\n");
+  }
+
+  function renderBackupText(){
+    var ta = document.getElementById("backupText");
+    if(ta) ta.value = generateBackupTSV();
+  }
+
+  function bandIdFromLabel(label){
+    var l = (label || "").toLowerCase();
+    if(l.indexOf("fundamentalistas")!==-1) return "fundamentalistas";
+    return "redondos";
+  }
+
+  function parseBackupTSV(text){
+    var lines = text.split(/\r?\n/).filter(function(l){ return l.trim().length>0; });
+    if(lines.length===0) return [];
+    var start = 0;
+    var firstCols = lines[0].split("\t");
+    if(firstCols[0] && firstCols[0].trim().toLowerCase()==="banda") start = 1; // saltear el encabezado si vino incluido
+    var out = [];
+    for(var i=start;i<lines.length;i++){
+      var cols = lines[i].split("\t");
+      if(cols.length<5) continue;
+      var texto = (cols[4]||"").trim();
+      if(!texto) continue;
+      out.push({
+        banda: bandIdFromLabel(cols[0]),
+        disco: (cols[1]||"").trim(),
+        anio: (cols[2]||"").trim(),
+        cancion: (cols[3]||"").trim(),
+        texto: texto
+      });
+    }
+    return out;
+  }
+
+  // Reemplaza las frases propias de este dispositivo por las de la caja de backup.
+  // Las frases base (del repo) se mantienen siempre, así que se ignoran las filas que ya son base.
+  function replacePhrasesFromRows(rows){
+    var base = phrases.filter(function(p){ return p.base; });
+    var seen = {};
+    base.forEach(function(p){ seen[phraseKey(p)] = true; });
+    var mine = [];
+    rows.forEach(function(r){
+      var k = phraseKey(r);
+      if(seen[k]) return;
+      seen[k] = true;
+      mine.push({ id: uid(), banda:r.banda, disco:r.disco, anio:r.anio, cancion:r.cancion, texto:r.texto });
+    });
+    phrases = base.concat(mine);
+  }
+
+  // ---------------- Helpers ----------------
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  function bandOf(id){ return DATA[id] ? DATA[id].label : id; }
+
+  function filteredIds(){
+    return phrases
+      .filter(function(p){ return filtro==="todas" || p.banda===filtro; })
+      .map(function(p){ return p.id; });
+  }
+
+  function shuffle(arr){
+    for(var i=arr.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+    }
+    return arr;
+  }
+
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._h);
+    showToast._h = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  // ---------------- Game logic ----------------
+  function refillBag(){
+    bag = shuffle(filteredIds());
+  }
+
+  function nextPhrase(){
+    revealed = false;
+    var ids = filteredIds();
+    if(ids.length===0){ current = null; renderCard(); renderStats(); return; }
+    // drop any ids that no longer exist or no longer match the filter (e.g. deleted)
+    bag = bag.filter(function(id){ return ids.indexOf(id)!==-1; });
+    if(bag.length===0) refillBag();
+    var id = bag.pop();
+    current = phrases.find(function(p){ return p.id===id; }) || null;
+    renderCard();
+    renderStats();
+  }
+
+  // ---------------- Rendering: chips ----------------
+  function renderChips(){
+    var counts = {todas:phrases.length, redondos:0, fundamentalistas:0};
+    phrases.forEach(function(p){ if(counts[p.banda]!==undefined) counts[p.banda]++; });
+
+    var wrap = document.getElementById("chips");
+    wrap.innerHTML = "";
+    var defs = [
+      {id:"todas", label:"Todas", cls:""},
+      {id:"redondos", label:DATA.redondos.short, cls:"tag-redondos"},
+      {id:"fundamentalistas", label:DATA.fundamentalistas.short, cls:"tag-fundamentalistas"}
+    ];
+    defs.forEach(function(d){
+      var btn = document.createElement("button");
+      btn.className = "chip " + d.cls + (filtro===d.id ? " active" : "");
+      btn.innerHTML = '<span class="dot"></span>' + d.label + ' (' + counts[d.id] + ')';
+      if(counts[d.id]===0 && d.id!=="todas") btn.disabled = true;
+      btn.addEventListener("click", function(){
+        filtro = d.id;
+        refillBag();
+        nextPhrase();
+        renderChips();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  // ---------------- Rendering: card ----------------
+  function renderCard(){
+    var tag = document.getElementById("bandTag");
+    var texto = document.getElementById("fraseTexto");
+    var meta = document.getElementById("metaCount");
+    var rev = document.getElementById("reveal");
+    var revC = document.getElementById("revCancion");
+    var revD = document.getElementById("revDisco");
+    var btnRevelar = document.getElementById("btnRevelar");
+
+    rev.classList.remove("show");
+
+    if(!current){
+      tag.textContent = "—";
+      tag.className = "band-tag";
+      texto.textContent = phrases.length===0
+        ? "Todavía no hay frases cargadas. Tocá el + de arriba para sumar la primera."
+        : "No hay frases para este filtro todavía.";
+      meta.textContent = "";
+      btnRevelar.disabled = true;
+      return;
+    }
+
+    btnRevelar.disabled = false;
+    tag.textContent = bandOf(current.banda);
+    tag.className = "band-tag " + current.banda;
+    texto.textContent = current.texto;
+    var ids = filteredIds();
+    meta.textContent = "quedan " + bag.length + " de " + ids.length + " en esta ronda";
+
+    revC.textContent = current.cancion;
+    revD.textContent = current.disco + " · " + current.anio;
+  }
+
+  function renderStats(){
+    var el = document.getElementById("stats");
+    el.textContent = "banco: " + phrases.length + " frase" + (phrases.length===1?"":"s") +
+      " · " + DATA.redondos.short + ": " + phrases.filter(function(p){return p.banda==="redondos";}).length +
+      " · " + DATA.fundamentalistas.short + ": " + phrases.filter(function(p){return p.banda==="fundamentalistas";}).length;
+  }
+
+  // ---------------- Add-phrase sheet ----------------
+  function populateBandaSelect(){
+    var sel = document.getElementById("selBanda");
+    sel.innerHTML = "";
+    Object.keys(DATA).forEach(function(id){
+      var opt = document.createElement("option");
+      opt.value = id; opt.textContent = DATA[id].label;
+      sel.appendChild(opt);
+    });
+  }
+
+  function populateDiscoSelect(){
+    var bandaId = document.getElementById("selBanda").value;
+    var sel = document.getElementById("selDisco");
+    sel.innerHTML = "";
+    DATA[bandaId].albums.forEach(function(al){
+      var opt = document.createElement("option");
+      opt.value = al.name; opt.textContent = al.name + " (" + al.year + ")";
+      sel.appendChild(opt);
+    });
+    populateCancionSelect();
+  }
+
+  function populateCancionSelect(){
+    var bandaId = document.getElementById("selBanda").value;
+    var discoName = document.getElementById("selDisco").value;
+    var album = DATA[bandaId].albums.find(function(a){ return a.name===discoName; });
+    var sel = document.getElementById("selCancion");
+    sel.innerHTML = "";
+    (album ? album.songs : []).forEach(function(s){
+      var opt = document.createElement("option");
+      opt.value = s; opt.textContent = s;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderBankList(){
+    var list = document.getElementById("bankList");
+    var count = document.getElementById("bankCount");
+    count.textContent = phrases.length + " frase" + (phrases.length===1?"":"s");
+    list.innerHTML = "";
+    if(phrases.length===0){
+      var e = document.createElement("div");
+      e.className = "bank-empty";
+      e.textContent = "Todavía no agregaste ninguna frase.";
+      list.appendChild(e);
+      return;
+    }
+    // most recently added first
+    phrases.slice().reverse().forEach(function(p){
+      var item = document.createElement("div");
+      item.className = "bank-item";
+      var txt = document.createElement("div");
+      txt.className = "txt";
+      var q = document.createElement("span");
+      q.className = "q";
+      q.textContent = '"' + p.texto + '"';
+      var meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = bandOf(p.banda) + " — " + p.cancion + " (" + p.disco + ", " + p.anio + ")";
+      txt.appendChild(q); txt.appendChild(meta);
+      var del = document.createElement("button");
+      del.setAttribute("aria-label", "Borrar frase");
+      del.textContent = "🗑";
+      del.addEventListener("click", function(){
+        phrases = phrases.filter(function(x){ return x.id!==p.id; });
+        savePhrases();
+        renderChips(); renderStats(); renderBankList();
+        if(!current || current.id===p.id){ nextPhrase(); }
+        else { renderCard(); }
+      });
+      item.appendChild(txt);
+      if(!p.base) item.appendChild(del);   // las frases base vienen del repo: no se borran desde acá
+      list.appendChild(item);
+    });
+  }
+
+  function openSheet(){
+    document.getElementById("sheetOverlay").classList.add("open");
+    document.body.style.overflow = "hidden";
+    renderBackupText();
+    var sheetEl = document.querySelector(".sheet");
+    if(sheetEl) sheetEl.scrollTop = 0;
+  }
+  function closeSheet(){
+    document.getElementById("sheetOverlay").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  // ---------------- Score ----------------
+  function renderScore(){
+    document.getElementById("scoreA").textContent = score.a;
+    document.getElementById("scoreB").textContent = score.b;
+  }
+
+  // ---------------- Wire up events ----------------
+  function wireEvents(){
+    document.getElementById("openAdd").addEventListener("click", openSheet);
+    document.getElementById("closeAdd").addEventListener("click", closeSheet);
+    document.getElementById("sheetOverlay").addEventListener("click", function(e){
+      if(e.target===this) closeSheet();
+    });
+
+    document.getElementById("selBanda").addEventListener("change", populateDiscoSelect);
+    document.getElementById("selDisco").addEventListener("change", populateCancionSelect);
+
+    document.getElementById("btnGuardar").addEventListener("click", function(){
+      var banda = document.getElementById("selBanda").value;
+      var disco = document.getElementById("selDisco").value;
+      var albumObj = DATA[banda].albums.find(function(a){ return a.name===disco; });
+      var cancion = document.getElementById("selCancion").value;
+      var texto = document.getElementById("txtFrase").value.trim();
+      if(!texto){ showToast("Escribí la frase antes de guardar"); return; }
+      phrases.push({
+        id: uid(),
+        banda: banda,
+        disco: disco,
+        anio: albumObj ? albumObj.year : "",
+        cancion: cancion,
+        texto: texto
+      });
+      savePhrases();
+      document.getElementById("txtFrase").value = "";
+      renderChips(); renderStats(); renderBankList();
+      showToast("Frase guardada");
+      if(!current) nextPhrase();
+    });
+
+    document.getElementById("btnRevelar").addEventListener("click", function(){
+      if(!current) return;
+      revealed = !revealed;
+      document.getElementById("reveal").classList.toggle("show", revealed);
+    });
+
+    document.getElementById("btnSiguiente").addEventListener("click", function(){
+      nextPhrase();
+    });
+
+    document.querySelectorAll(".score-team button[data-team]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var team = btn.getAttribute("data-team");
+        var delta = parseInt(btn.getAttribute("data-delta"), 10);
+        score[team] = Math.max(0, score[team] + delta);
+        renderScore();
+      });
+    });
+    document.getElementById("scoreReset").addEventListener("click", function(){
+      score = {a:0,b:0};
+      renderScore();
+    });
+
+    document.getElementById("btnCopiar").addEventListener("click", function(){
+      var ta = document.getElementById("backupText");
+      ta.value = generateBackupTSV();
+      ta.select();
+      ta.setSelectionRange(0, 999999);
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(ta.value)
+          .then(function(){ showToast("Copiado"); })
+          .catch(function(){ showToast("Seleccionado — copiá con Ctrl/Cmd+C"); });
+      } else {
+        showToast("Seleccionado — copiá con Ctrl/Cmd+C");
+      }
+    });
+
+    document.getElementById("btnActualizar").addEventListener("click", function(){
+      var ta = document.getElementById("backupText");
+      var text = ta.value.trim();
+      if(!text){ showToast("Escribí o pegá el backup primero"); return; }
+      var rows = parseBackupTSV(text);
+      if(rows.length===0){ showToast("No encontré frases válidas en ese texto"); return; }
+      replacePhrasesFromRows(rows);
+      savePhrases();
+      refillBag();
+      nextPhrase();
+      renderChips(); renderStats(); renderBankList();
+      showToast("Banco actualizado: " + rows.length + " frase" + (rows.length===1?"":"s"));
+    });
+
+    document.addEventListener("keydown", function(e){
+      if(document.getElementById("sheetOverlay").classList.contains("open")) return;
+      if(e.key===" "){ e.preventDefault(); document.getElementById("btnRevelar").click(); }
+      if(e.key==="Enter"){ document.getElementById("btnSiguiente").click(); }
+      if(e.key==="Escape"){ closeSheet(); }
+    });
+  }
+
+  // ---------------- Init ----------------
+  function init(){
+    populateBandaSelect();
+    populateDiscoSelect();
+    wireEvents();
+    renderScore();
+
+    loadBasePhrases().then(function(base){
+      // frases propias de este dispositivo, sin las que ya están en la base
+      var seen = {};
+      base.forEach(function(p){ seen[phraseKey(p)] = true; });
+      var mine = loadLocalPhrases().filter(function(p){
+        if(!p || typeof p.texto !== "string" || !p.texto.trim()) return false;
+        var k = phraseKey(p);
+        if(seen[k]) return false;
+        seen[k] = true;
+        return true;
+      });
+      phrases = base.concat(mine);
+      refillBag();
+      nextPhrase();
+      renderChips();
+      renderStats();
+      renderBankList();
+    });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
