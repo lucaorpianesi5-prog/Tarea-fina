@@ -461,6 +461,58 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
 
+  /* ---------- Bienvenida ---------- */
+  .head-btns{display:flex; gap:8px; flex:0 0 auto;}
+  .icon-help{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:20px;}
+  .icon-help:hover{transform:none;}
+  .welcome-overlay{
+    position:fixed; inset:0; z-index:35; display:none;
+    background:rgba(10,8,6,.78); padding:16px; overflow-y:auto;
+    align-items:flex-start; justify-content:center;
+  }
+  .welcome-overlay.open{display:flex;}
+  .welcome{
+    width:100%; max-width:440px; margin:auto 0;
+    background:var(--ink); border:2.5px solid var(--hueso-dim); border-radius:12px;
+    padding:22px 20px 18px; display:flex; flex-direction:column; gap:12px;
+    box-shadow:8px 8px 0 var(--sangre);
+  }
+  .welcome-logo{align-self:center; width:96px; height:96px;}
+  .welcome h2{
+    margin:0; text-align:center;
+    font-family:'Stardos Stencil', 'Big Shoulders Display', sans-serif; font-weight:700;
+    font-size:28px; text-transform:uppercase; letter-spacing:1px;
+  }
+  .welcome h3{
+    margin:6px 0 0; font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    font-size:17px; text-transform:uppercase; letter-spacing:.06em; color:var(--hueso-dim);
+  }
+  .welcome p, .welcome dd{margin:0; font-size:13.5px; line-height:1.55;}
+  .welcome-lead{color:var(--hueso);}
+  .welcome-key{
+    background:var(--paper); color:var(--grafito);
+    padding:16px 16px 14px; clip-path:var(--torn); transform:rotate(-.6deg);
+  }
+  .welcome-key-tag{
+    display:inline-block; margin-bottom:6px;
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:12px;
+    text-transform:uppercase; letter-spacing:.08em;
+    border:2px solid var(--sangre); color:var(--sangre); padding:2px 8px;
+  }
+  .welcome-key p{font-size:14px;}
+  .welcome-key .dots{font-family:'Space Mono', monospace; color:var(--sangre); white-space:nowrap;}
+  .welcome-modes{margin:0; display:grid; grid-template-columns:auto 1fr; gap:8px 12px;}
+  .welcome-modes dt{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:15px;
+    text-transform:uppercase; color:var(--ocre); padding-top:1px;
+  }
+  .welcome-modes dd{color:var(--hueso-dim);}
+  .welcome-note{color:var(--hueso-dim); font-size:12.5px !important;}
+  .welcome-check{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--hueso-dim); cursor:pointer;}
+  .welcome-check input{width:18px; height:18px; accent-color:var(--ricota);}
+  .welcome-foot{text-align:center; font-size:11.5px !important; color:var(--hueso-dim);}
+  @media (max-width:360px){ .welcome-modes{grid-template-columns:1fr; gap:2px;} .welcome-modes dd{margin-bottom:6px;} }
+
   /* ---------- Modo de juego ---------- */
   .modes{
     display:grid; grid-template-columns:repeat(3,1fr); gap:0;
@@ -615,7 +667,10 @@
       <h1>TAREA <span>FINA</span></h1>
       <p>adiviná el tema y el disco</p>
     </div>
-    <button class="icon-btn" id="openAdd" title="Agregar frase" aria-label="Agregar frase">＋</button>
+    <div class="head-btns">
+      <button class="icon-btn icon-help" id="openHelp" title="Cómo se juega" aria-label="Cómo se juega">?</button>
+      <button class="icon-btn" id="openAdd" title="Agregar frase" aria-label="Agregar frase">＋</button>
+    </div>
   </header>
 
   <div class="save-warning" role="alert">
@@ -760,6 +815,34 @@
       <span id="bankCount">0 frases</span>
     </div>
     <div class="bank-list" id="bankList"></div>
+  </div>
+</div>
+
+<div class="welcome-overlay" id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="welcome">
+    <img src="assets/logo.svg" alt="" class="welcome-logo" width="96" height="96">
+    <h2 id="welcomeTitle">Cómo se juega</h2>
+    <p class="welcome-lead">La app tira una frase de Los Redondos o de Los Fundamentalistas y hay que adivinar <b>de qué tema</b> y <b>de qué disco</b> es. Se juega en persona: se debate y después se revela la respuesta.</p>
+
+    <div class="welcome-key">
+      <span class="welcome-key-tag">Importante</span>
+      <p>Si la frase tiene <b class="dots">(...)</b>, en ese lugar va una palabra que está en el <b>nombre de la canción</b>. Está tapada para no regalar la respuesta.</p>
+    </div>
+
+    <h3>Modos</h3>
+    <dl class="welcome-modes">
+      <dt>Libre</dt>
+      <dd>Tocá <b>Otra frase</b>, debatan y tocá <b>Revelar</b>. Los puntos se suman a mano.</dd>
+      <dt>Equipos</dt>
+      <dd>El celu va en el medio y la pantalla se parte en dos, una mitad por equipo. Corre el tiempo y el que toca primero su mitad frena y responde en voz alta. Se revela y se marca si acertó: si acertó suma un punto.</dd>
+      <dt>Jugadores</dt>
+      <dd>Igual que Equipos, pero con un solo pulsador para todos. Quien frena se marca en la lista y responde.</dd>
+    </dl>
+    <p class="welcome-note">En los modos con tiempo, si nadie frena antes de que termine, se revela la respuesta y se pasa a la siguiente. Si alguien tocó sin querer, se puede seguir corriendo.</p>
+
+    <label class="welcome-check"><input type="checkbox" id="welcomeHide"> No volver a mostrar al abrir</label>
+    <button class="btn btn-primary" id="welcomeClose">A jugar</button>
+    <p class="welcome-foot">Podés volver a ver esto con el botón <b>?</b> de arriba.</p>
   </div>
 </div>
 
@@ -1279,6 +1362,7 @@
 
     document.addEventListener("keydown", function(e){
       if(document.getElementById("sheetOverlay").classList.contains("open")) return;
+      if(isWelcomeOpen()){ if(e.key==="Escape") closeWelcome(); return; }
       if(isGameOpen()){ if(e.key==="Escape") closeGame(); return; }
       if(prefs.mode!=="libre") return;
       if(e.key===" "){ e.preventDefault(); document.getElementById("btnRevelar").click(); }
@@ -1665,8 +1749,38 @@
     });
   }
 
+  // ---------------- Bienvenida ----------------
+  var WELCOME_KEY = "tarea-fina-bienvenida-oculta";
+  function isWelcomeOpen(){ return document.getElementById("welcome").classList.contains("open"); }
+  function openWelcome(){
+    var hidden = false;
+    try{ hidden = window.localStorage.getItem(WELCOME_KEY)==="1"; }catch(e){}
+    document.getElementById("welcomeHide").checked = hidden;
+    document.getElementById("welcome").classList.add("open");
+    document.body.style.overflow = "hidden";
+    document.getElementById("welcome").scrollTop = 0;
+    document.getElementById("welcomeClose").focus({preventScroll:true});
+  }
+  function closeWelcome(){
+    try{
+      if(document.getElementById("welcomeHide").checked) window.localStorage.setItem(WELCOME_KEY, "1");
+      else window.localStorage.removeItem(WELCOME_KEY);
+    }catch(e){}
+    document.getElementById("welcome").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  function wireWelcome(){
+    document.getElementById("openHelp").addEventListener("click", openWelcome);
+    document.getElementById("welcomeClose").addEventListener("click", closeWelcome);
+    document.getElementById("welcome").addEventListener("click", function(e){ if(e.target===this) closeWelcome(); });
+    var hidden = false;
+    try{ hidden = window.localStorage.getItem(WELCOME_KEY)==="1"; }catch(e){}
+    if(!hidden) openWelcome();
+  }
+
   // ---------------- Init ----------------
   function init(){
+    wireWelcome();
     loadPrefs();
     wireGame();
     renderMode();
