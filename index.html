@@ -126,6 +126,26 @@
   .icon-btn:focus-visible{outline:2px solid var(--ricota); outline-offset:2px;}
 
   /* ---------- Chips ---------- */
+  .save-warning{
+    display:none;
+    background:var(--sangre);
+    color:var(--hueso);
+    border:2.5px solid var(--ink);
+    border-radius:6px;
+    padding:10px 12px;
+    font-size:12.5px;
+    line-height:1.45;
+  }
+  .save-warning.show{display:block;}
+  .save-warning b{font-family:'Big Shoulders Display', sans-serif; font-size:16px; letter-spacing:.03em; text-transform:uppercase; display:block; margin-bottom:2px;}
+  .save-warning button{
+    margin-top:8px;
+    font-family:'Space Mono', monospace; font-weight:700; font-size:12px; text-transform:uppercase;
+    background:var(--hueso); color:var(--ink); border:2px solid var(--ink); border-radius:3px;
+    padding:7px 10px; cursor:pointer;
+  }
+  .sheet .save-warning{margin:0 0 14px;}
+
   .chips{
     display:flex;
     gap:8px;
@@ -457,6 +477,12 @@
     <button class="icon-btn" id="openAdd" title="Agregar frase" aria-label="Agregar frase">＋</button>
   </header>
 
+  <div class="save-warning" role="alert">
+    <b>⚠ No se están guardando tus frases</b>
+    Este navegador no dejó guardarlas, así que si cerrás o recargás se pierden. Copiá el backup ahora y pegalo en <code>data/frases.tsv</code> del repo.
+    <br><button type="button" id="btnWarnOpen">Abrir backup</button>
+  </div>
+
   <div class="chips" id="chips"></div>
 
   <div class="stage">
@@ -509,6 +535,11 @@
     <button class="close-btn" id="closeAdd" aria-label="Cerrar">×</button>
     <h2>Agregar frase</h2>
     <p class="sub">Elegí banda, disco y canción, y pegá la frase tal cual (vos la sabés de memoria o la sacás de tu disco/streaming — la app no trae letras cargadas).</p>
+
+    <div class="save-warning" role="alert">
+      <b>⚠ No se están guardando tus frases</b>
+      Este navegador no dejó guardarlas. Copiá el backup de abajo ahora (botón Copiar) y pegalo en <code>data/frases.tsv</code> del repo, o se pierden al recargar.
+    </div>
 
     <div class="import-box">
       <div class="bank-head">
@@ -604,19 +635,70 @@
   var score = {a:0, b:0};
 
   // ---------------- Storage ----------------
-  // Las frases que agrega cada persona se guardan en su navegador (localStorage).
-  // Las frases base se leen siempre del archivo del repo y no se guardan acá.
+  // Las frases que agrega cada persona se guardan en su navegador.
+  // Principal: IndexedDB (cupo grande). Respaldo: localStorage (cupo chico, ~5 MB compartido
+  // con las demás apps del mismo dominio github.io). Las frases base se leen siempre del
+  // archivo del repo y no se guardan acá.
+  var IDB_NAME = "tarea-fina", IDB_STORE = "kv", IDB_KEY = "frases";
+  var idbPromise = null;
+
   function phraseKey(p){
     return [p.banda, p.disco, p.cancion, String(p.texto).trim().toLowerCase()].join("|");
   }
 
-  function loadLocalPhrases(){
+  function openIDB(){
+    if(idbPromise) return idbPromise;
+    idbPromise = new Promise(function(resolve, reject){
+      try{
+        if(!window.indexedDB){ reject(new Error("sin IndexedDB")); return; }
+        var rq = window.indexedDB.open(IDB_NAME, 1);
+        rq.onupgradeneeded = function(){ rq.result.createObjectStore(IDB_STORE); };
+        rq.onsuccess = function(){ resolve(rq.result); };
+        rq.onerror = function(){ reject(rq.error || new Error("no abrió IndexedDB")); };
+        rq.onblocked = function(){ reject(new Error("IndexedDB bloqueada")); };
+      }catch(e){ reject(e); }
+    });
+    idbPromise.catch(function(){ idbPromise = null; });   // si falló, permitir reintentar la próxima vez
+    return idbPromise;
+  }
+
+  function idbGet(){
+    return openIDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var rq = db.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).get(IDB_KEY);
+        rq.onsuccess = function(){ resolve(rq.result); };
+        rq.onerror = function(){ reject(rq.error); };
+      });
+    });
+  }
+
+  function idbSet(arr){
+    return openIDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put(arr, IDB_KEY);
+        tx.oncomplete = function(){ resolve(true); };
+        tx.onerror = function(){ reject(tx.error || new Error("falló la escritura")); };
+        tx.onabort = function(){ reject(tx.error || new Error("escritura abortada")); };
+      });
+    });
+  }
+
+  function readLocalStorage(){
     try{
       var raw = window.localStorage.getItem(STORAGE_KEY);
       if(!raw) return [];
       var arr = JSON.parse(raw);
       return Array.isArray(arr) ? arr : [];
     }catch(e){ return []; }
+  }
+
+  // Si IndexedDB ya guardó algo, manda ella. Si no, se leen las frases que versiones
+  // anteriores dejaron en localStorage (así no se pierde nada de lo ya cargado).
+  function loadLocalPhrases(){
+    return idbGet()
+      .then(function(v){ return Array.isArray(v) ? v : readLocalStorage(); })
+      .catch(function(){ return readLocalStorage(); });
   }
 
   function loadBasePhrases(){
@@ -630,16 +712,42 @@
       .catch(function(){ return []; });   // sin archivo (o abierto como file://): se juega solo con lo local
   }
 
+  // Cada guardado escribe la foto completa de las frases propias. Se encolan para que
+  // la última siempre gane aunque se guarden varias seguidas.
+  var saveChain = Promise.resolve();
+
   function savePhrases(){
-    var mine = phrases.filter(function(p){ return !p.base; });
-    try{
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(mine));
-      return true;
-    }catch(e){
-      console.error("No se pudo guardar", e);
-      showToast("No se pudo guardar en este navegador");
-      return false;
-    }
+    var snap = phrases.filter(function(p){ return !p.base; }).map(function(p){
+      return { id:p.id, banda:p.banda, disco:p.disco, anio:p.anio, cancion:p.cancion, texto:p.texto };
+    });
+    saveChain = saveChain.then(function(){
+      return idbSet(snap)
+        .then(function(){
+          // ya está en IndexedDB: borrar la copia vieja de localStorage para liberar cupo y evitar copias desactualizadas
+          try{ window.localStorage.removeItem(STORAGE_KEY); }catch(e){}
+          return true;
+        })
+        .catch(function(err){
+          console.warn("IndexedDB falló, pruebo con localStorage", err);
+          try{
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
+            return true;
+          }catch(e){
+            console.error("No se pudo guardar", e);
+            return false;
+          }
+        });
+    }).then(function(ok){
+      setSaveWarning(!ok);
+      return ok;
+    });
+    return saveChain;
+  }
+
+  function setSaveWarning(show){
+    document.querySelectorAll(".save-warning").forEach(function(el){
+      el.classList.toggle("show", !!show);
+    });
   }
 
   // ---------------- Backup: tabla lista para pegar en Excel/Sheets ----------------
@@ -916,6 +1024,7 @@
   // ---------------- Wire up events ----------------
   function wireEvents(){
     document.getElementById("openAdd").addEventListener("click", openSheet);
+    document.getElementById("btnWarnOpen").addEventListener("click", openSheet);
     document.getElementById("closeAdd").addEventListener("click", closeSheet);
     document.getElementById("sheetOverlay").addEventListener("click", function(e){
       if(e.target===this) closeSheet();
@@ -1012,11 +1121,15 @@
     wireEvents();
     renderScore();
 
-    loadBasePhrases().then(function(base){
+    // pedir al navegador que no borre lo guardado cuando necesite espacio (si lo permite)
+    try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+
+    Promise.all([loadBasePhrases(), loadLocalPhrases()]).then(function(res){
+      var base = res[0];
       // frases propias de este dispositivo, sin las que ya están en la base
       var seen = {};
       base.forEach(function(p){ seen[phraseKey(p)] = true; });
-      var mine = loadLocalPhrases().filter(function(p){
+      var mine = res[1].filter(function(p){
         if(!p || typeof p.texto !== "string" || !p.texto.trim()) return false;
         var k = phraseKey(p);
         if(seen[k]) return false;
