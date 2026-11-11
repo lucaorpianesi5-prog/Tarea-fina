@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.svg" alt="Tarea Fina" width="200"></p>
+
 # Tarea Fina
 
 Juego para jugar entre amigos, en persona: la app tira una frase al azar y hay que adivinar de qué tema y de qué disco es. Después se debate de dónde viene y se revela la respuesta.
