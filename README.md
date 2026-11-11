@@ -4,7 +4,7 @@ Juego para jugar entre amigos, en persona: la app tira una frase al azar y hay q
 
 Cubre la discografía de **Los Redondos** y de **Los Fundamentalistas del Aire Acondicionado**.
 
-**Jugar:** https://lucaorpianesi5-prog.github.io/tarea-fina/
+**Jugar:** https://lucaorpianesi5-prog.github.io/Tarea-fina/
 
 ## Cómo se juega
 
