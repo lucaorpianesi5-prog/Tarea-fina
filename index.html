@@ -461,6 +461,145 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
 
+  /* ---------- Modo de juego ---------- */
+  .modes{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:0;
+    border:2.5px solid var(--ink-3); border-radius:4px; overflow:hidden;
+  }
+  .mode-btn{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:16px;
+    letter-spacing:.04em; text-transform:uppercase;
+    padding:10px 6px; border:none; background:var(--ink-2); color:var(--hueso-dim); cursor:pointer;
+  }
+  .mode-btn + .mode-btn{border-left:2.5px solid var(--ink-3);}
+  .mode-btn.active{background:var(--hueso); color:var(--ink);}
+  .mode-btn:focus-visible{outline:2px solid var(--ricota); outline-offset:-4px;}
+
+  .setup{
+    display:none; flex-direction:column; gap:14px;
+    background:var(--ink-2); border:2px solid var(--ink-3); border-radius:10px; padding:16px 14px;
+  }
+  .setup-label{display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--hueso-dim); margin-bottom:8px;}
+  .durs{display:flex; flex-wrap:wrap; gap:8px;}
+  .dur{
+    font-family:'Space Mono', monospace; font-weight:700; font-size:14px;
+    min-width:52px; padding:9px 10px; border-radius:3px;
+    border:2.5px solid var(--ink-3); background:var(--ink); color:var(--hueso-dim); cursor:pointer;
+  }
+  .dur.active{background:var(--ocre); border-color:var(--ink); color:var(--ink);}
+  .setup-hint{margin:0; font-size:12.5px; line-height:1.5; color:var(--hueso-dim);}
+  .players{display:flex; flex-direction:column; gap:6px;}
+  .player-row{
+    display:flex; align-items:center; gap:10px;
+    background:var(--ink); border:1px solid var(--ink-3); border-radius:6px; padding:7px 10px;
+  }
+  .player-row .pname{flex:1; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .player-row .pscore{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:22px; color:var(--ocre); min-width:26px; text-align:right;}
+  .player-row button{background:none; border:none; color:var(--hueso-dim); font-size:18px; cursor:pointer; padding:2px 4px;}
+  .player-row button:hover{color:var(--ricota);}
+  .player-add{display:flex; gap:8px;}
+  .player-add input{
+    flex:1; min-width:0; font-family:'Space Mono', monospace; font-size:14px;
+    background:var(--ink); color:var(--hueso); border:2px solid var(--ink-3); border-radius:6px; padding:9px 10px;
+  }
+  .player-add input:focus-visible{outline:2px solid var(--ricota);}
+  .player-add .btn{padding:9px 14px; font-size:16px;}
+  .players-empty{font-size:12.5px; color:var(--hueso-dim); padding:4px 0;}
+  #setupPlayers{display:none;}
+
+  body.mode-equipos .setup, body.mode-jugadores .setup{display:flex;}
+  body.mode-jugadores #setupPlayers{display:block;}
+  body.mode-equipos .stage, body.mode-equipos .actions,
+  body.mode-jugadores .stage, body.mode-jugadores .actions,
+  body.mode-jugadores .score{display:none;}
+
+  /* ---------- Partida con timer ---------- */
+  .game{
+    position:fixed; inset:0; z-index:30; display:none;
+    background:var(--ink); color:var(--hueso);
+    touch-action:manipulation; user-select:none; -webkit-user-select:none;
+  }
+  .game.open{display:block;}
+  .pads{position:absolute; inset:0; display:flex; flex-direction:column;}
+  .pad{
+    flex:1; position:relative; border:none; margin:0; padding:0; cursor:pointer;
+    display:none; color:var(--ink); font:inherit; -webkit-tap-highlight-color:transparent;
+  }
+  .game.mode-equipos .pad-a, .game.mode-equipos .pad-b{display:block;}
+  .game.mode-jugadores .pad-solo{display:block;}
+  .pad-a{background:var(--ricota);}
+  .pad-b{background:var(--naranja); border-bottom:4px solid var(--ink);}
+  .pad-solo{background:var(--ink-2); color:var(--hueso);}
+  .pad-b .pad-inner{transform:rotate(180deg);}
+  .pad-inner{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; padding:18px 22px; text-align:center;
+  }
+  .pad-label{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:15px;
+    text-transform:uppercase; letter-spacing:.08em; opacity:.8;
+  }
+  .pad-frase{
+    margin:0; font-family:'Space Mono', monospace; font-weight:700; font-style:italic;
+    font-size:clamp(16px, 4.6vw, 24px); line-height:1.3; max-width:560px;
+    display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .pad-frase::before{content:"“";} .pad-frase::after{content:"”";}
+  .pad-solo .pad-frase{
+    font-size:clamp(18px, 5.4vw, 30px); background:var(--paper); color:var(--grafito);
+    padding:22px 20px; transform:rotate(-1deg); clip-path:var(--torn); -webkit-line-clamp:7;
+  }
+  .pad-secs{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:clamp(44px, 13vw, 80px); line-height:1;}
+  .pad-solo .pad-secs{color:var(--ocre);}
+  .pad-bar{width:min(80%, 420px); height:8px; background:rgba(23,18,15,.25); border-radius:4px; overflow:hidden;}
+  .pad-solo .pad-bar{background:var(--ink-3);}
+  .pad-bar i{display:block; height:100%; width:100%; background:currentColor;}
+  .pad-solo .pad-bar i{background:var(--ocre);}
+  .game.urgente .pad-secs, .game.urgente .pad-solo .pad-secs{color:var(--sangre);}
+  .game.urgente .pad-solo .pad-bar i{background:var(--sangre);}
+  .game.urgente .pad-a .pad-secs, .game.urgente .pad-b .pad-secs{color:var(--hueso); text-shadow:2px 2px 0 var(--sangre);}
+  .game.urgente .pad-a .pad-bar i, .game.urgente .pad-b .pad-bar i{background:var(--hueso);}
+  .pad-hint{font-size:12px; opacity:.75;}
+  .game[data-state="ready"] .pads{visibility:hidden;}
+  .game:not([data-state="running"]) .pads{filter:brightness(.35) saturate(.6);}
+  .pad.ganador{filter:none;}
+
+  .game-exit{
+    position:absolute; top:10px; right:10px; z-index:3;
+    font-family:'Space Mono', monospace; font-weight:700; font-size:12px; text-transform:uppercase;
+    background:rgba(23,18,15,.75); color:var(--hueso); border:2px solid var(--hueso-dim); border-radius:3px;
+    padding:6px 10px; cursor:pointer;
+  }
+  .game.mode-equipos[data-state="running"] .game-exit{top:auto; bottom:10px;}
+  .gpanel{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2;
+    width:min(92vw, 420px); max-height:90vh; overflow-y:auto;
+    background:var(--ink); border:2.5px solid var(--hueso-dim); border-radius:10px;
+    padding:20px 18px; display:flex; flex-direction:column; gap:14px; text-align:center;
+  }
+  .game[data-state="running"] .gpanel{display:none;}
+  .gp-title{margin:0; font-family:'Stardos Stencil', 'Big Shoulders Display', sans-serif; font-weight:700; font-size:26px; text-transform:uppercase; letter-spacing:1px;}
+  .gp-title.team-a{color:var(--ricota);} .gp-title.team-b{color:var(--naranja);} .gp-title.solo{color:var(--ocre);}
+  .gp-text{margin:0; font-size:13.5px; line-height:1.5; color:var(--hueso-dim);}
+  .gp-answer{
+    background:var(--paper); color:var(--grafito); padding:16px 14px; text-align:left;
+    clip-path:var(--torn); transform:rotate(-1deg);
+  }
+  .gp-answer .frase{font-style:italic; font-size:13px; margin:0 0 8px; color:#5c5145;}
+  .gp-answer .cancion{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:26px; text-transform:uppercase; color:var(--sangre); line-height:1;}
+  .gp-answer .disco{font-size:13px; color:#5c5145; margin-top:4px;}
+  .gp-row{display:flex; gap:10px;}
+  .gp-row .btn{flex:1;}
+  .btn-ok{background:#3E7B4F; color:var(--hueso);}
+  .btn-ko{background:var(--sangre); color:var(--hueso);}
+  .gp-link{background:none; border:none; color:var(--hueso-dim); font-family:'Space Mono', monospace; font-size:12px; text-decoration:underline; cursor:pointer; padding:4px;}
+  .gp-scores{display:flex; flex-wrap:wrap; justify-content:center; gap:8px;}
+  .gp-score{border:2px solid var(--ink-3); border-radius:6px; padding:6px 10px; display:flex; align-items:baseline; gap:8px; font-size:13px;}
+  .gp-score b{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:22px;}
+  .gp-score.team-a b{color:var(--ricota);} .gp-score.team-b b{color:var(--naranja);} .gp-score.solo b{color:var(--ocre);}
+  .gp-pick{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
+  .gp-pick .btn{font-size:17px; padding:12px 8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
   @media (max-width:360px){
     .brand h1{font-size:25px;}
     .frase-texto{font-size:19px;}
@@ -485,7 +624,30 @@
     <br><button type="button" id="btnWarnOpen">Abrir backup</button>
   </div>
 
+  <div class="modes" role="tablist" aria-label="Modo de juego">
+    <button class="mode-btn" data-mode="libre" role="tab">Libre</button>
+    <button class="mode-btn" data-mode="equipos" role="tab">Equipos</button>
+    <button class="mode-btn" data-mode="jugadores" role="tab">Jugadores</button>
+  </div>
+
   <div class="chips" id="chips"></div>
+
+  <div class="setup" id="setup">
+    <div>
+      <span class="setup-label">Tiempo por frase</span>
+      <div class="durs" id="durs"></div>
+    </div>
+    <div id="setupPlayers">
+      <span class="setup-label">Jugadores</span>
+      <div class="players" id="playersList"></div>
+      <form class="player-add" id="playerForm" style="margin-top:8px;">
+        <input id="playerName" maxlength="20" placeholder="Nombre" autocomplete="off" aria-label="Nombre del jugador">
+        <button class="btn btn-secondary" type="submit">Sumar</button>
+      </form>
+    </div>
+    <p class="setup-hint" id="setupHint"></p>
+    <button class="btn btn-primary" id="btnStartGame">▶ Arrancar partida</button>
+  </div>
 
   <div class="stage">
     <div class="tape tl"></div>
@@ -530,6 +692,22 @@
 
   <div class="stats" id="stats"></div>
 
+</div>
+
+<div class="game" id="game" data-state="ready" aria-hidden="true">
+  <div class="pads">
+    <button class="pad pad-b" data-pad="b" aria-label="Frenar: Equipo B">
+      <div class="pad-inner"><span class="pad-label">Equipo B · tocá para frenar</span><p class="pad-frase"></p><span class="pad-secs"></span><div class="pad-bar"><i></i></div></div>
+    </button>
+    <button class="pad pad-a" data-pad="a" aria-label="Frenar: Equipo A">
+      <div class="pad-inner"><span class="pad-label">Equipo A · tocá para frenar</span><p class="pad-frase"></p><span class="pad-secs"></span><div class="pad-bar"><i></i></div></div>
+    </button>
+    <button class="pad pad-solo" data-pad="solo" aria-label="Frenar el tiempo">
+      <div class="pad-inner"><p class="pad-frase"></p><span class="pad-secs"></span><div class="pad-bar"><i></i></div><span class="pad-hint">El primero que toca la pantalla frena el tiempo</span></div>
+    </button>
+  </div>
+  <div class="gpanel" id="gpanel"></div>
+  <button class="game-exit" id="gameExit">✕ Salir</button>
 </div>
 
 <div class="sheet-overlay" id="sheetOverlay">
@@ -1110,14 +1288,397 @@
 
     document.addEventListener("keydown", function(e){
       if(document.getElementById("sheetOverlay").classList.contains("open")) return;
+      if(isGameOpen()){ if(e.key==="Escape") closeGame(); return; }
+      if(prefs.mode!=="libre") return;
       if(e.key===" "){ e.preventDefault(); document.getElementById("btnRevelar").click(); }
       if(e.key==="Enter"){ document.getElementById("btnSiguiente").click(); }
       if(e.key==="Escape"){ closeSheet(); }
     });
   }
 
+  // ================= Modos con timer =================
+  // Libre: el modo de siempre. Equipos: pantalla partida en dos pulsadores (A abajo, B arriba dado vuelta).
+  // Jugadores: un solo pulsador y después se marca quién frenó.
+  var PREFS_KEY = "tarea-fina-prefs-v1";
+  var DURS = [10, 15, 20, 30, 45, 60];
+  var MAX_PLAYERS = 12;
+  var prefs = { mode:"libre", dur:20, players:[] };   // players: nombres
+  var playerScores = {};                              // nombre -> puntos (solo durante la sesión)
+
+  var game = {
+    state:"ready",      // ready | running | stopped | pick | answer | revealed | timeout
+    who:null,           // "a" | "b" | índice de jugador
+    remaining:0, t0:0, timer:null, stoppedAt:0,
+    last:null,          // mensaje del resultado anterior
+    round:0
+  };
+  var actx = null, wakeLock = null;
+
+  function loadPrefs(){
+    try{
+      var p = JSON.parse(window.localStorage.getItem(PREFS_KEY) || "null");
+      if(p && typeof p === "object"){
+        if(["libre","equipos","jugadores"].indexOf(p.mode)!==-1) prefs.mode = p.mode;
+        if(DURS.indexOf(p.dur)!==-1) prefs.dur = p.dur;
+        if(Array.isArray(p.players)) prefs.players = p.players.filter(function(n){ return typeof n==="string" && n.trim(); }).slice(0, MAX_PLAYERS);
+      }
+    }catch(e){}
+  }
+  function savePrefs(){
+    try{ window.localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }catch(e){}
+  }
+
+  function el(tag, cls, text){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(text!=null) e.textContent = text;
+    return e;
+  }
+
+  // ---------- Pantalla principal: modo y configuración ----------
+  function renderMode(){
+    document.body.classList.remove("mode-libre","mode-equipos","mode-jugadores");
+    document.body.classList.add("mode-" + prefs.mode);
+    document.querySelectorAll(".mode-btn").forEach(function(b){
+      var on = b.getAttribute("data-mode")===prefs.mode;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    var durs = document.getElementById("durs");
+    durs.innerHTML = "";
+    DURS.forEach(function(d){
+      var b = el("button", "dur" + (d===prefs.dur ? " active" : ""), d + " s");
+      b.type = "button";
+      b.addEventListener("click", function(){ prefs.dur = d; savePrefs(); renderMode(); });
+      durs.appendChild(b);
+    });
+    var hint = document.getElementById("setupHint");
+    if(prefs.mode==="equipos"){
+      hint.textContent = "Apoyen el celu en el medio, cada equipo de un lado. Cada mitad de la pantalla es el pulsador de un equipo: el que toca primero frena el tiempo y responde en voz alta.";
+    }else if(prefs.mode==="jugadores"){
+      hint.textContent = "Apoyen el celu en el medio. Cualquiera toca la pantalla para frenar el tiempo; después se marca quién fue y responde en voz alta.";
+    }
+    renderPlayers();
+  }
+
+  function renderPlayers(){
+    var list = document.getElementById("playersList");
+    list.innerHTML = "";
+    if(prefs.players.length===0){
+      list.appendChild(el("div", "players-empty", "Sumá al menos dos jugadores."));
+      return;
+    }
+    prefs.players.forEach(function(name, i){
+      var row = el("div", "player-row");
+      row.appendChild(el("span", "pname", name));
+      row.appendChild(el("span", "pscore", String(playerScores[name] || 0)));
+      var del = el("button", null, "×");
+      del.type = "button";
+      del.setAttribute("aria-label", "Quitar a " + name);
+      del.addEventListener("click", function(){
+        prefs.players.splice(i, 1);
+        delete playerScores[name];
+        savePrefs(); renderPlayers();
+      });
+      row.appendChild(del);
+      list.appendChild(row);
+    });
+    if(Object.keys(playerScores).some(function(k){ return playerScores[k] > 0; })){
+      var reset = el("button", "score-reset", "reiniciar puntajes");
+      reset.type = "button";
+      reset.style.alignSelf = "center";
+      reset.addEventListener("click", function(){ playerScores = {}; renderPlayers(); });
+      list.appendChild(reset);
+    }
+  }
+
+  function addPlayer(name){
+    name = (name || "").trim().slice(0, 20);
+    if(!name){ showToast("Escribí un nombre"); return false; }
+    if(prefs.players.length >= MAX_PLAYERS){ showToast("Máximo " + MAX_PLAYERS + " jugadores"); return false; }
+    var dup = prefs.players.some(function(n){ return n.toLowerCase()===name.toLowerCase(); });
+    if(dup){ showToast("Ya hay un jugador con ese nombre"); return false; }
+    prefs.players.push(name);
+    savePrefs(); renderPlayers();
+    return true;
+  }
+
+  // ---------- Partida ----------
+  function gameEl(){ return document.getElementById("game"); }
+  function isGameOpen(){ return gameEl().classList.contains("open"); }
+
+  function openGame(){
+    if(filteredIds().length===0){ showToast("No hay frases para jugar con este filtro"); return; }
+    if(prefs.mode==="jugadores" && prefs.players.length < 2){ showToast("Sumá al menos dos jugadores"); return; }
+    try{ if(!actx){ var AC = window.AudioContext || window.webkitAudioContext; if(AC) actx = new AC(); } }catch(e){}
+    var g = gameEl();
+    g.classList.remove("mode-equipos","mode-jugadores");
+    g.classList.add("mode-" + prefs.mode);
+    g.classList.add("open");
+    g.setAttribute("aria-hidden","false");
+    document.body.style.overflow = "hidden";
+    game.state = "ready"; game.who = null; game.last = null; game.round = 0; game.stoppedAt = 0;
+    lockScreen();
+    renderGame();
+  }
+
+  function closeGame(){
+    clearInterval(game.timer); game.timer = null;
+    var g = gameEl();
+    g.classList.remove("open","urgente");
+    g.setAttribute("aria-hidden","true");
+    document.body.style.overflow = "";
+    unlockScreen();
+    renderScore(); renderPlayers();
+  }
+
+  function startRound(){
+    nextPhrase();
+    if(!current){ showToast("No hay frases para jugar con este filtro"); closeGame(); return; }
+    game.round++;
+    game.who = null;
+    game.remaining = prefs.dur * 1000;
+    runTimer();
+  }
+
+  function runTimer(){
+    game.state = "running";
+    game.t0 = performance.now();
+    clearInterval(game.timer);
+    game.timer = setInterval(tick, 100);
+    renderGame();
+    tick();
+  }
+
+  function timeLeft(){
+    if(game.state!=="running") return game.remaining;
+    return Math.max(0, game.remaining - (performance.now() - game.t0));
+  }
+
+  function tick(){
+    var left = timeLeft();
+    var secs = Math.ceil(left / 1000);
+    var pct = (left / (prefs.dur * 1000)) * 100;
+    var g = gameEl();
+    g.querySelectorAll(".pad-secs").forEach(function(s){ s.textContent = secs; });
+    g.querySelectorAll(".pad-bar i").forEach(function(b){ b.style.width = pct.toFixed(1) + "%"; });
+    g.classList.toggle("urgente", game.state==="running" && left <= 5000);
+    if(game.state==="running" && left <= 0) timeUp();
+  }
+
+  function freeze(){
+    game.remaining = timeLeft();
+    clearInterval(game.timer); game.timer = null;
+    game.stoppedAt = performance.now();
+  }
+
+  function onPad(padId){
+    if(game.state!=="running") return;
+    if(performance.now() - game.t0 < 250 && game.remaining === prefs.dur * 1000) return;   // toque accidental al arrancar
+    freeze();
+    if(padId==="a" || padId==="b"){ game.who = padId; game.state = "answer"; }
+    else { game.who = null; game.state = "pick"; }
+    try{ if(navigator.vibrate) navigator.vibrate(60); }catch(e){}
+    renderGame();
+  }
+
+  function timeUp(){
+    freeze();
+    game.remaining = 0;
+    game.state = "timeout";
+    gameEl().classList.remove("urgente");
+    beep();
+    try{ if(navigator.vibrate) navigator.vibrate([200, 80, 200]); }catch(e){}
+    game.last = "Nadie llegó a tiempo";
+    renderGame();
+  }
+
+  function whoName(){
+    if(game.who==="a") return "Equipo A";
+    if(game.who==="b") return "Equipo B";
+    if(typeof game.who==="number") return prefs.players[game.who] || "";
+    return "";
+  }
+
+  function settle(ok){
+    var name = whoName();
+    if(ok){
+      if(game.who==="a" || game.who==="b"){ score[game.who]++; renderScore(); }
+      else if(name){ playerScores[name] = (playerScores[name] || 0) + 1; }
+      game.last = "Punto para " + name;
+    }else{
+      game.last = name + " no acertó";
+    }
+    game.state = "ready";
+    renderGame();
+  }
+
+  // Botones del panel: se ignoran justo después de frenar, para que el mismo toque no "aprete" un botón que aparece debajo del dedo.
+  function guarded(fn){
+    return function(){
+      if(performance.now() - game.stoppedAt < 450) return;
+      fn.apply(null, arguments);
+    };
+  }
+
+  function btn(cls, text, fn){
+    var b = el("button", "btn " + cls, text);
+    b.type = "button";
+    b.addEventListener("click", guarded(fn));
+    return b;
+  }
+
+  function scoresBox(){
+    var box = el("div", "gp-scores");
+    if(prefs.mode==="equipos"){
+      [["a","Equipo A"],["b","Equipo B"]].forEach(function(t){
+        var s = el("div", "gp-score team-" + t[0]);
+        s.appendChild(el("span", null, t[1]));
+        s.appendChild(el("b", null, String(score[t[0]])));
+        box.appendChild(s);
+      });
+    }else{
+      prefs.players.slice().sort(function(x, y){ return (playerScores[y]||0) - (playerScores[x]||0); }).forEach(function(n){
+        var s = el("div", "gp-score solo");
+        s.appendChild(el("span", null, n));
+        s.appendChild(el("b", null, String(playerScores[n] || 0)));
+        box.appendChild(s);
+      });
+    }
+    return box;
+  }
+
+  function answerCard(){
+    var a = el("div", "gp-answer");
+    if(current){
+      a.appendChild(el("p", "frase", "“" + current.texto + "”"));
+      a.appendChild(el("div", "cancion", current.cancion));
+      a.appendChild(el("div", "disco", bandOf(current.banda) + " · " + current.disco + " · " + current.anio));
+    }
+    return a;
+  }
+
+  function renderGame(){
+    var g = gameEl();
+    g.setAttribute("data-state", game.state);
+    if(current){
+      g.querySelectorAll(".pad-frase").forEach(function(p){ p.textContent = current.texto; });
+    }
+    g.querySelectorAll(".pad").forEach(function(p){
+      p.classList.toggle("ganador", game.state!=="running" && p.getAttribute("data-pad")===game.who);
+    });
+    tick();
+
+    var panel = document.getElementById("gpanel");
+    panel.innerHTML = "";
+    var teamCls = game.who==="a" ? "team-a" : game.who==="b" ? "team-b" : "solo";
+
+    if(game.state==="ready"){
+      panel.appendChild(el("h2", "gp-title" + (game.last && game.last.indexOf("Punto")===0 ? " " + teamCls : ""),
+        game.last || (prefs.mode==="equipos" ? "Equipos" : "Jugadores")));
+      panel.appendChild(scoresBox());
+      panel.appendChild(el("p", "gp-text", game.round===0
+        ? (prefs.mode==="equipos"
+            ? "Celu en el medio. Cada equipo toca su mitad para frenar. " + prefs.dur + " segundos por frase."
+            : "Celu en el medio. El primero que toca la pantalla frena el tiempo. " + prefs.dur + " segundos por frase.")
+        : "Quedan " + bag.length + " frases en esta ronda."));
+      panel.appendChild(btn("btn-primary", game.round===0 ? "▶ Arrancar" : "▶ Siguiente frase", startRound));
+    }
+    else if(game.state==="pick"){
+      panel.appendChild(el("h2", "gp-title solo", "¿Quién frenó?"));
+      var grid = el("div", "gp-pick");
+      prefs.players.forEach(function(n, i){
+        grid.appendChild(btn("btn-secondary", n, function(){ game.who = i; game.state = "answer"; renderGame(); }));
+      });
+      panel.appendChild(grid);
+      var resume = el("button", "gp-link", "Fue sin querer: seguir corriendo");
+      resume.type = "button";
+      resume.addEventListener("click", guarded(runTimer));
+      panel.appendChild(resume);
+    }
+    else if(game.state==="answer"){
+      panel.appendChild(el("h2", "gp-title " + teamCls, "Frenó " + whoName()));
+      panel.appendChild(el("p", "gp-text", "Que diga tema y disco en voz alta, y después revelen la respuesta."));
+      panel.appendChild(btn("btn-primary", "Revelar", function(){ game.state = "revealed"; renderGame(); }));
+      var resume2 = el("button", "gp-link", "Fue sin querer: seguir corriendo");
+      resume2.type = "button";
+      resume2.addEventListener("click", guarded(runTimer));
+      panel.appendChild(resume2);
+    }
+    else if(game.state==="revealed"){
+      panel.appendChild(el("h2", "gp-title " + teamCls, whoName()));
+      panel.appendChild(answerCard());
+      panel.appendChild(el("p", "gp-text", "¿Lo que dijo coincide?"));
+      var row = el("div", "gp-row");
+      row.appendChild(btn("btn-ok", "✔ Acertó", function(){ settle(true); }));
+      row.appendChild(btn("btn-ko", "✘ Falló", function(){ settle(false); }));
+      panel.appendChild(row);
+    }
+    else if(game.state==="timeout"){
+      panel.appendChild(el("h2", "gp-title", "Se acabó el tiempo"));
+      panel.appendChild(answerCard());
+      panel.appendChild(scoresBox());
+      panel.appendChild(btn("btn-primary", "▶ Siguiente frase", startRound));
+    }
+  }
+
+  function beep(){
+    try{
+      if(!actx) return;
+      if(actx.state==="suspended") actx.resume();
+      var o = actx.createOscillator(), gn = actx.createGain();
+      o.type = "square"; o.frequency.value = 330;
+      gn.gain.setValueAtTime(0.12, actx.currentTime);
+      gn.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.6);
+      o.connect(gn); gn.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime + 0.6);
+    }catch(e){}
+  }
+
+  // que la pantalla no se apague con el celu apoyado en la mesa
+  function lockScreen(){
+    try{
+      if(navigator.wakeLock && document.visibilityState==="visible"){
+        navigator.wakeLock.request("screen").then(function(w){ wakeLock = w; }).catch(function(){});
+      }
+    }catch(e){}
+  }
+  function unlockScreen(){
+    try{ if(wakeLock) wakeLock.release(); }catch(e){}
+    wakeLock = null;
+  }
+
+  function wireGame(){
+    document.querySelectorAll(".mode-btn").forEach(function(b){
+      b.addEventListener("click", function(){
+        prefs.mode = b.getAttribute("data-mode");
+        savePrefs(); renderMode();
+      });
+    });
+    document.getElementById("playerForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var inp = document.getElementById("playerName");
+      if(addPlayer(inp.value)) inp.value = "";
+      inp.focus();
+    });
+    document.getElementById("btnStartGame").addEventListener("click", openGame);
+    document.getElementById("gameExit").addEventListener("click", closeGame);
+    document.querySelectorAll(".pad").forEach(function(p){
+      var id = p.getAttribute("data-pad");
+      // pointerdown responde al instante (sin esperar a que se levante el dedo); click queda para teclado
+      p.addEventListener("pointerdown", function(e){ e.preventDefault(); onPad(id); });
+      p.addEventListener("click", function(){ onPad(id); });
+    });
+    document.addEventListener("visibilitychange", function(){
+      if(isGameOpen() && document.visibilityState==="visible") lockScreen();
+    });
+  }
+
   // ---------------- Init ----------------
   function init(){
+    loadPrefs();
+    wireGame();
+    renderMode();
     populateBandaSelect();
     populateDiscoSelect();
     wireEvents();

@@ -10,10 +10,13 @@ Cubre la discografía de **Los Redondos** y de **Los Fundamentalistas del Aire A
 
 ## Cómo se juega
 
-1. Elegí si querés frases de Los Redondos, de Los Fundamentalistas o de las dos.
-2. Tocá **Otra frase** y debatan de qué tema y disco es.
-3. Tocá **Revelar** para ver la respuesta.
-4. Sumá puntos al Equipo A o al Equipo B.
+Elegí si querés frases de Los Redondos, de Los Fundamentalistas o de las dos, y un modo:
+
+- **Libre:** tocá **Otra frase**, debatan de qué tema y disco es, y tocá **Revelar** para ver la respuesta. Los puntos se suman a mano.
+- **Equipos (con timer):** el celu va en el medio y la pantalla se parte en dos, una mitad por equipo (la de enfrente aparece dada vuelta). Corre el tiempo y el equipo que toca primero su mitad frena el timer y responde en voz alta. Después se revela la respuesta y se marca si acertó: si acertó suma un punto. Si se acaba el tiempo, se revela y se pasa a la siguiente.
+- **Jugadores (con timer):** igual, pero con un solo pulsador para todos. Quien frena lo marca en la lista de jugadores y responde.
+
+El tiempo por frase se elige antes de arrancar (de 10 a 60 segundos). Si alguien toca sin querer, se puede seguir corriendo el timer.
 
 No se repite ninguna frase hasta agotar la ronda.
 
