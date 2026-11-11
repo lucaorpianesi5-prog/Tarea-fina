@@ -89,6 +89,8 @@
     border-bottom:2px dashed var(--ink-3);
   }
 
+  .brand{display:flex; align-items:center; gap:11px; min-width:0;}
+  .brand-logo{width:54px; height:54px; flex:0 0 auto; transform:rotate(-4deg);}
   .brand h1{
     font-family:'Stardos Stencil', 'Big Shoulders Display', sans-serif;
     font-weight:700;
@@ -540,6 +542,13 @@
   }
   .dur.active{background:var(--ocre); border-color:var(--ink); color:var(--ink);}
   .setup-hint{margin:0; font-size:12.5px; line-height:1.5; color:var(--hueso-dim);}
+  .setup-sub{margin:7px 0 0; font-size:12px; line-height:1.45; color:var(--hueso-dim);}
+  .setup-sub:empty{display:none;}
+  #optFinN:empty{display:none;}
+  #btnNewGame{align-self:center;}
+  .gp-final .gp-score{padding:8px 12px;}
+  .gp-final .gp-score.win{border-color:var(--ocre);}
+  .gp-goal{font-family:'Space Mono', monospace; font-size:12px; color:var(--ocre); margin:0;}
   .players{display:flex; flex-direction:column; gap:6px;}
   .player-row{
     display:flex; align-items:center; gap:10px;
@@ -654,6 +663,7 @@
 
   @media (max-width:360px){
     .brand h1{font-size:25px;}
+    .brand-logo{width:44px; height:44px;}
     .frase-texto{font-size:19px;}
   }
 </style>
@@ -664,8 +674,11 @@
 
   <header>
     <div class="brand">
-      <h1>TAREA <span>FINA</span></h1>
-      <p>adiviná el tema y el disco</p>
+      <img src="assets/logo.svg" class="brand-logo" alt="" width="54" height="54">
+      <div>
+        <h1>TAREA <span>FINA</span></h1>
+        <p>adiviná el tema y el disco</p>
+      </div>
     </div>
     <div class="head-btns">
       <button class="icon-btn icon-help" id="openHelp" title="Cómo se juega" aria-label="Cómo se juega">?</button>
@@ -692,6 +705,17 @@
       <span class="setup-label">Tiempo por frase</span>
       <div class="durs" id="durs"></div>
     </div>
+    <div>
+      <span class="setup-label">Dificultad</span>
+      <div class="durs" id="optDiff"></div>
+      <p class="setup-sub" id="diffHint"></p>
+    </div>
+    <div>
+      <span class="setup-label">Fin de la partida</span>
+      <div class="durs" id="optFin"></div>
+      <div class="durs" id="optFinN" style="margin-top:8px;"></div>
+      <p class="setup-sub" id="finHint"></p>
+    </div>
     <div id="setupPlayers">
       <span class="setup-label">Jugadores</span>
       <div class="players" id="playersList"></div>
@@ -702,6 +726,7 @@
     </div>
     <p class="setup-hint" id="setupHint"></p>
     <button class="btn btn-primary" id="btnStartGame">▶ Arrancar partida</button>
+    <button class="score-reset" id="btnNewGame" type="button" hidden>Empezar una partida nueva (pone los puntos en 0)</button>
   </div>
 
   <div class="stage">
@@ -838,7 +863,7 @@
       <dt>Jugadores</dt>
       <dd>Igual que Equipos, pero con un solo pulsador para todos. Quien frena se marca en la lista y responde.</dd>
     </dl>
-    <p class="welcome-note">En los modos con tiempo, si nadie frena antes de que termine, se revela la respuesta y se pasa a la siguiente. Si alguien tocó sin querer, se puede seguir corriendo.</p>
+    <p class="welcome-note">En los modos con tiempo, antes de arrancar elijan cuánto dura cada frase, la dificultad (en <b>Difícil</b>, errar resta un punto) y cómo termina la partida: sin final, cuando alguien llega a cierta cantidad de puntos o después de cierta cantidad de frases. Si nadie frena antes de que termine el tiempo, se revela la respuesta y se pasa a la siguiente. Si alguien tocó sin querer, se puede seguir corriendo.</p>
 
     <label class="welcome-check"><input type="checkbox" id="welcomeHide"> No volver a mostrar al abrir</label>
     <button class="btn btn-primary" id="welcomeClose">A jugar</button>
@@ -1377,15 +1402,19 @@
   var PREFS_KEY = "tarea-fina-prefs-v1";
   var DURS = [10, 15, 20, 30, 45, 60];
   var MAX_PLAYERS = 12;
-  var prefs = { mode:"libre", dur:20, players:[] };   // players: nombres
+  var FIN_PUNTOS = [5, 10, 15, 20];
+  var FIN_FRASES = [10, 20, 30, 50];
+  // diff: facil | dificil (errar resta 1). fin: libre (sin final) | puntos | frases
+  var prefs = { mode:"libre", dur:20, players:[], diff:"facil", fin:"libre", finPuntos:10, finFrases:20 };
   var playerScores = {};                              // nombre -> puntos (solo durante la sesión)
 
   var game = {
-    state:"ready",      // ready | running | stopped | pick | answer | revealed | timeout
+    state:"ready",      // ready | running | pick | answer | revealed | timeout | final
     who:null,           // "a" | "b" | índice de jugador
     remaining:0, t0:0, timer:null, stoppedAt:0,
     last:null,          // mensaje del resultado anterior
-    round:0
+    round:0,            // frases jugadas en esta partida
+    active:false        // hay una partida empezada y sin terminar
   };
   var actx = null, wakeLock = null;
 
@@ -1396,6 +1425,10 @@
         if(["libre","equipos","jugadores"].indexOf(p.mode)!==-1) prefs.mode = p.mode;
         if(DURS.indexOf(p.dur)!==-1) prefs.dur = p.dur;
         if(Array.isArray(p.players)) prefs.players = p.players.filter(function(n){ return typeof n==="string" && n.trim(); }).slice(0, MAX_PLAYERS);
+        if(p.diff==="facil" || p.diff==="dificil") prefs.diff = p.diff;
+        if(["libre","puntos","frases"].indexOf(p.fin)!==-1) prefs.fin = p.fin;
+        if(FIN_PUNTOS.indexOf(p.finPuntos)!==-1) prefs.finPuntos = p.finPuntos;
+        if(FIN_FRASES.indexOf(p.finFrases)!==-1) prefs.finFrases = p.finFrases;
       }
     }catch(e){}
   }
@@ -1419,14 +1452,23 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
-    var durs = document.getElementById("durs");
-    durs.innerHTML = "";
-    DURS.forEach(function(d){
-      var b = el("button", "dur" + (d===prefs.dur ? " active" : ""), d + " s");
-      b.type = "button";
-      b.addEventListener("click", function(){ prefs.dur = d; savePrefs(); renderMode(); });
-      durs.appendChild(b);
-    });
+    chipGroup("durs", DURS.map(function(d){ return [d, d + " s"]; }), prefs.dur, function(v){ prefs.dur = v; });
+    chipGroup("optDiff", [["facil","Fácil"],["dificil","Difícil"]], prefs.diff, function(v){ prefs.diff = v; });
+    document.getElementById("diffHint").textContent = prefs.diff==="dificil"
+      ? "Errar resta un punto (los puntajes pueden quedar en negativo)."
+      : "Errar no resta: solo suma el que acierta.";
+    chipGroup("optFin", [["libre","Sin final"],["puntos","A puntos"],["frases","Por frases"]], prefs.fin, function(v){ prefs.fin = v; });
+    var finN = document.getElementById("optFinN");
+    finN.innerHTML = "";
+    if(prefs.fin==="puntos") chipGroup("optFinN", FIN_PUNTOS.map(function(n){ return [n, n + " pts"]; }), prefs.finPuntos, function(v){ prefs.finPuntos = v; });
+    if(prefs.fin==="frases") chipGroup("optFinN", FIN_FRASES.map(function(n){ return [n, n + " frases"]; }), prefs.finFrases, function(v){ prefs.finFrases = v; });
+    document.getElementById("finHint").textContent =
+      prefs.fin==="puntos" ? "Gana el primero que llega a " + prefs.finPuntos + " puntos." :
+      prefs.fin==="frases" ? "Se juegan " + prefs.finFrases + " frases y gana el que tenga más puntos." :
+      "Se juega hasta que quieran. Los puntos se van sumando.";
+    var start = document.getElementById("btnStartGame");
+    start.textContent = game.active ? "▶ Seguir partida" : "▶ Arrancar partida";
+    document.getElementById("btnNewGame").hidden = !game.active;
     var hint = document.getElementById("setupHint");
     if(prefs.mode==="equipos"){
       hint.textContent = "Apoyen el celu en el medio, cada equipo de un lado. Cada mitad de la pantalla es el pulsador de un equipo: el que toca primero frena el tiempo y responde en voz alta.";
@@ -1434,6 +1476,26 @@
       hint.textContent = "Apoyen el celu en el medio. Cualquiera toca la pantalla para frenar el tiempo; después se marca quién fue y responde en voz alta.";
     }
     renderPlayers();
+  }
+
+  // Grupo de botones de una sola elección (tiempo, dificultad, fin...).
+  function chipGroup(id, options, currentVal, onPick){
+    var box = document.getElementById(id);
+    box.innerHTML = "";
+    options.forEach(function(o){
+      var b = el("button", "dur" + (o[0]===currentVal ? " active" : ""), o[1]);
+      b.type = "button";
+      b.setAttribute("aria-pressed", o[0]===currentVal ? "true" : "false");
+      b.addEventListener("click", function(){ onPick(o[0]); savePrefs(); renderMode(); });
+      box.appendChild(b);
+    });
+  }
+
+  function resetMatch(){
+    score = {a:0, b:0};
+    playerScores = {};
+    game.round = 0; game.last = null; game.active = false;
+    renderScore(); renderPlayers();
   }
 
   function renderPlayers(){
@@ -1458,7 +1520,7 @@
       row.appendChild(del);
       list.appendChild(row);
     });
-    if(Object.keys(playerScores).some(function(k){ return playerScores[k] > 0; })){
+    if(Object.keys(playerScores).some(function(k){ return playerScores[k] !== 0; })){
       var reset = el("button", "score-reset", "reiniciar puntajes");
       reset.type = "button";
       reset.style.alignSelf = "center";
@@ -1492,7 +1554,8 @@
     g.classList.add("open");
     g.setAttribute("aria-hidden","false");
     document.body.style.overflow = "hidden";
-    game.state = "ready"; game.who = null; game.last = null; game.round = 0; game.stoppedAt = 0;
+    if(!game.active) resetMatch();      // partida nueva: puntos en 0
+    game.state = "ready"; game.who = null; game.stoppedAt = 0;
     lockScreen();
     renderGame();
   }
@@ -1504,12 +1567,13 @@
     g.setAttribute("aria-hidden","true");
     document.body.style.overflow = "";
     unlockScreen();
-    renderScore(); renderPlayers();
+    renderScore(); renderPlayers(); renderMode();
   }
 
   function startRound(){
     nextPhrase();
     if(!current){ showToast("No hay frases para jugar con este filtro"); closeGame(); return; }
+    game.active = true;
     game.round++;
     game.who = null;
     game.remaining = prefs.dur * 1000;
@@ -1575,18 +1639,44 @@
     return "";
   }
 
+  function addPoints(delta){
+    var name = whoName();
+    if(game.who==="a" || game.who==="b"){ score[game.who] += delta; renderScore(); }
+    else if(name){ playerScores[name] = (playerScores[name] || 0) + delta; }
+  }
+
   function settle(ok){
     var name = whoName();
     if(ok){
-      if(game.who==="a" || game.who==="b"){ score[game.who]++; renderScore(); }
-      else if(name){ playerScores[name] = (playerScores[name] || 0) + 1; }
+      addPoints(1);
       game.last = "Punto para " + name;
+    }else if(prefs.diff==="dificil"){
+      addPoints(-1);
+      game.last = name + " falló: −1";
     }else{
       game.last = name + " no acertó";
     }
-    game.state = "ready";
+    game.state = matchOver() ? "final" : "ready";
+    if(game.state==="final") game.active = false;
     renderGame();
   }
+
+  // ---------- Fin de la partida ----------
+  function standings(){
+    if(prefs.mode==="equipos") return [["Equipo A", score.a, "team-a"], ["Equipo B", score.b, "team-b"]];
+    return prefs.players.map(function(n){ return [n, playerScores[n] || 0, "solo"]; });
+  }
+  function matchOver(){
+    if(prefs.fin==="puntos") return standings().some(function(s){ return s[1] >= prefs.finPuntos; });
+    if(prefs.fin==="frases") return game.round >= prefs.finFrases;
+    return false;
+  }
+  function goalText(){
+    if(prefs.fin==="puntos") return "Gana el primero en llegar a " + prefs.finPuntos + " puntos";
+    if(prefs.fin==="frases") return "Frase " + Math.min(game.round + 1, prefs.finFrases) + " de " + prefs.finFrases;
+    return "";
+  }
+  function finish(){ game.state = "final"; game.active = false; renderGame(); }
 
   // Botones del panel: se ignoran justo después de frenar, para que el mismo toque no "aprete" un botón que aparece debajo del dedo.
   function guarded(fn){
@@ -1651,13 +1741,39 @@
     if(game.state==="ready"){
       panel.appendChild(el("h2", "gp-title" + (game.last && game.last.indexOf("Punto")===0 ? " " + teamCls : ""),
         game.last || (prefs.mode==="equipos" ? "Equipos" : "Jugadores")));
+      if(goalText()) panel.appendChild(el("p", "gp-goal", goalText()));
       panel.appendChild(scoresBox());
       panel.appendChild(el("p", "gp-text", game.round===0
         ? (prefs.mode==="equipos"
             ? "Celu en el medio. Cada equipo toca su mitad para frenar. " + prefs.dur + " segundos por frase."
-            : "Celu en el medio. El primero que toca la pantalla frena el tiempo. " + prefs.dur + " segundos por frase.")
+            : "Celu en el medio. El primero que toca la pantalla frena el tiempo. " + prefs.dur + " segundos por frase.") +
+          (prefs.diff==="dificil" ? " Modo difícil: errar resta un punto." : "")
         : "Quedan " + bag.length + " frases en esta ronda."));
       panel.appendChild(btn("btn-primary", game.round===0 ? "▶ Arrancar" : "▶ Siguiente frase", startRound));
+    }
+    else if(game.state==="final"){
+      var st = standings();
+      var top = Math.max.apply(null, st.map(function(s){ return s[1]; }));
+      var winners = st.filter(function(s){ return s[1]===top; });
+      var title = winners.length===1 ? "¡Ganó " + winners[0][0] + "!" :
+                  winners.length===st.length ? "Empate" :
+                  "Empate entre " + winners.map(function(s){ return s[0]; }).join(" y ");
+      panel.appendChild(el("h2", "gp-title " + (winners.length===1 ? winners[0][2] : ""), title));
+      if(game.last) panel.appendChild(el("p", "gp-text", game.last));
+      var box = el("div", "gp-scores gp-final");
+      st.slice().sort(function(x, y){ return y[1] - x[1]; }).forEach(function(s){
+        var d = el("div", "gp-score " + s[2] + (s[1]===top ? " win" : ""));
+        d.appendChild(el("span", null, s[0]));
+        d.appendChild(el("b", null, String(s[1])));
+        box.appendChild(d);
+      });
+      panel.appendChild(box);
+      panel.appendChild(el("p", "gp-text", "Se jugaron " + game.round + " frase" + (game.round===1 ? "" : "s") + "."));
+      panel.appendChild(btn("btn-primary", "▶ Jugar de nuevo", function(){ resetMatch(); game.state = "ready"; renderGame(); }));
+      var out = el("button", "gp-link", "Salir");
+      out.type = "button";
+      out.addEventListener("click", guarded(closeGame));
+      panel.appendChild(out);
     }
     else if(game.state==="pick"){
       panel.appendChild(el("h2", "gp-title solo", "¿Quién frenó?"));
@@ -1693,7 +1809,8 @@
       panel.appendChild(el("h2", "gp-title", "Se acabó el tiempo"));
       panel.appendChild(answerCard());
       panel.appendChild(scoresBox());
-      panel.appendChild(btn("btn-primary", "▶ Siguiente frase", startRound));
+      if(matchOver()) panel.appendChild(btn("btn-primary", "Ver resultado", finish));
+      else panel.appendChild(btn("btn-primary", "▶ Siguiente frase", startRound));
     }
   }
 
@@ -1726,7 +1843,9 @@
   function wireGame(){
     document.querySelectorAll(".mode-btn").forEach(function(b){
       b.addEventListener("click", function(){
-        prefs.mode = b.getAttribute("data-mode");
+        var m = b.getAttribute("data-mode");
+        if(m!==prefs.mode && game.active) resetMatch();   // cambiar de modo termina la partida en curso
+        prefs.mode = m;
         savePrefs(); renderMode();
       });
     });
@@ -1737,6 +1856,7 @@
       inp.focus();
     });
     document.getElementById("btnStartGame").addEventListener("click", openGame);
+    document.getElementById("btnNewGame").addEventListener("click", function(){ resetMatch(); renderMode(); showToast("Partida nueva: puntos en 0"); });
     document.getElementById("gameExit").addEventListener("click", closeGame);
     document.querySelectorAll(".pad").forEach(function(p){
       var id = p.getAttribute("data-pad");

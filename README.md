@@ -16,7 +16,13 @@ Elegí si querés frases de Los Redondos, de Los Fundamentalistas o de las dos, 
 - **Equipos (con timer):** el celu va en el medio y la pantalla se parte en dos, una mitad por equipo (la de enfrente aparece dada vuelta). Corre el tiempo y el equipo que toca primero su mitad frena el timer y responde en voz alta. Después se revela la respuesta y se marca si acertó: si acertó suma un punto. Si se acaba el tiempo, se revela y se pasa a la siguiente.
 - **Jugadores (con timer):** igual, pero con un solo pulsador para todos. Quien frena lo marca en la lista de jugadores y responde.
 
-El tiempo por frase se elige antes de arrancar (de 10 a 60 segundos). Si alguien toca sin querer, se puede seguir corriendo el timer.
+Antes de arrancar, en los modos con timer se personaliza la partida:
+
+- **Tiempo por frase:** de 10 a 60 segundos.
+- **Dificultad:** en **Fácil** errar no resta; en **Difícil** errar resta un punto.
+- **Fin de la partida:** sin final, **a puntos** (gana el primero que llega a 5, 10, 15 o 20) o **por frases** (se juegan 10, 20, 30 o 50 y gana el que tiene más puntos).
+
+Si alguien toca sin querer, se puede seguir corriendo el timer. Si se sale a la pantalla principal en medio de una partida, el botón pasa a ser **Seguir partida**, con la opción de empezar una nueva.
 
 No se repite ninguna frase hasta agotar la ronda.
 
