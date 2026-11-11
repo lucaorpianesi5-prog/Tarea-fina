@@ -714,7 +714,7 @@
   <div class="sheet">
     <button class="close-btn" id="closeAdd" aria-label="Cerrar">×</button>
     <h2>Agregar frase</h2>
-    <p class="sub">Elegí banda, disco y canción, y pegá la frase tal cual (vos la sabés de memoria o la sacás de tu disco/streaming — la app no trae letras cargadas).</p>
+    <p class="sub">El juego usa solo las frases del repo (<code>data/frases.tsv</code>). Las que cargues acá quedan pendientes en este dispositivo: copiá el backup y pegalo en el repo para que entren al juego.</p>
 
     <div class="save-warning" role="alert">
       <b>⚠ No se están guardando tus frases</b>
@@ -723,16 +723,14 @@
 
     <div class="import-box">
       <div class="bank-head">
-        <h3>Backup</h3>
-        <span>editable</span>
+        <h3>Backup para el repo</h3>
+        <span id="backupCount"></span>
       </div>
-      <p class="backup-hint">Esta caja es tu banco de frases en texto (Banda, Disco, Año, Canción, Frase, separados por tabulaciones — una fila por frase). Podés editarla a mano, o pegar encima un backup copiado en otro dispositivo. Tocá "Copiar" para sacar una copia, o "Actualizar" para que el banco de este dispositivo pase a ser exactamente lo que hay escrito acá.</p>
-      <textarea id="backupText" style="min-height:130px; font-size:11px;"></textarea>
+      <p class="backup-hint">Las frases del repo más las pendientes, sin repetidas. Tocá "Copiar" y pegalo en <code>data/frases.tsv</code> reemplazando todo: así las pendientes entran al juego.</p>
+      <textarea id="backupText" readonly style="min-height:130px; font-size:11px;"></textarea>
       <div class="backup-btn-row">
         <button class="btn btn-primary" id="btnCopiar">Copiar</button>
-        <button class="btn btn-update" id="btnActualizar">Actualizar</button>
       </div>
-      <p class="backup-hint backup-warning">"Actualizar" reemplaza las frases de este dispositivo por lo que esté escrito arriba. Las frases base del juego (las del repo) siempre se mantienen. Lo que agregues acá queda solo en este dispositivo.</p>
     </div>
 
     <hr class="divider">
@@ -758,7 +756,7 @@
     <hr class="divider">
 
     <div class="bank-head">
-      <h3>Mi banco de frases</h3>
+      <h3>Pendientes de subir</h3>
       <span id="bankCount">0 frases</span>
     </div>
     <div class="bank-list" id="bankList"></div>
@@ -807,7 +805,8 @@
   var BASE_FILE = "data/frases.tsv";   // frases base del juego (las del repo)
 
   // ---------------- State ----------------
-  var phrases = [];          // {id, banda, disco, anio, cancion, texto, base?} — base = viene del repo, solo lectura
+  var phrases = [];          // frases del juego: SOLO las del repo {id, banda, disco, anio, cancion, texto, base:true}
+  var drafts = [];           // pendientes de subir: cargadas en este dispositivo y que todavía no están en el repo
   var filtro = "todas";      // todas | redondos | fundamentalistas
   var bag = [];               // indices left in current filtered set (into phrases)
   var current = null;         // current phrase object
@@ -822,8 +821,12 @@
   var IDB_NAME = "tarea-fina", IDB_STORE = "kv", IDB_KEY = "frases";
   var idbPromise = null;
 
+  // Clave para detectar repetidas: ignora mayúsculas, espacios de más y diferencias de codificación de tildes.
+  function norm(v){
+    return String(v==null ? "" : v).normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim();
+  }
   function phraseKey(p){
-    return [p.banda, p.disco, p.cancion, String(p.texto).trim().toLowerCase()].join("|");
+    return [norm(p.banda), norm(p.disco), norm(p.cancion), norm(p.texto)].join("|");
   }
 
   function openIDB(){
@@ -896,8 +899,9 @@
   // la última siempre gane aunque se guarden varias seguidas.
   var saveChain = Promise.resolve();
 
+  // Guarda las pendientes de este dispositivo.
   function savePhrases(){
-    var snap = phrases.filter(function(p){ return !p.base; }).map(function(p){
+    var snap = drafts.map(function(p){
       return { id:p.id, banda:p.banda, disco:p.disco, anio:p.anio, cancion:p.cancion, texto:p.texto };
     });
     saveChain = saveChain.then(function(){
@@ -937,7 +941,7 @@
 
   function generateBackupTSV(){
     var header = ["Banda","Disco","Año","Canción","Frase"].join("\t");
-    var rows = phrases.map(function(p){
+    var rows = phrases.concat(drafts).map(function(p){
       return [tsvEscape(bandOf(p.banda)), tsvEscape(p.disco), tsvEscape(p.anio), tsvEscape(p.cancion), tsvEscape(p.texto)].join("\t");
     });
     return [header].concat(rows).join("\n");
@@ -946,6 +950,11 @@
   function renderBackupText(){
     var ta = document.getElementById("backupText");
     if(ta) ta.value = generateBackupTSV();
+    var c = document.getElementById("backupCount");
+    if(c){
+      var n = phrases.length + drafts.length;
+      c.textContent = n + " frase" + (n===1?"":"s") + (drafts.length ? " (" + drafts.length + " nueva" + (drafts.length===1?"":"s") + ")" : "");
+    }
   }
 
   function bandIdFromLabel(label){
@@ -977,20 +986,21 @@
     return out;
   }
 
-  // Reemplaza las frases propias de este dispositivo por las de la caja de backup.
-  // Las frases base (del repo) se mantienen siempre, así que se ignoran las filas que ya son base.
-  function replacePhrasesFromRows(rows){
-    var base = phrases.filter(function(p){ return p.base; });
-    var seen = {};
-    base.forEach(function(p){ seen[phraseKey(p)] = true; });
-    var mine = [];
-    rows.forEach(function(r){
-      var k = phraseKey(r);
-      if(seen[k]) return;
+  // Saca repetidas de una lista, dejando la primera aparición. `seen` permite descartar también las que ya están en otra lista.
+  function uniqueBy(list, seen){
+    seen = seen || {};
+    return list.filter(function(p){
+      if(!p || typeof p.texto !== "string" || !p.texto.trim()) return false;
+      var k = phraseKey(p);
+      if(seen[k]) return false;
       seen[k] = true;
-      mine.push({ id: uid(), banda:r.banda, disco:r.disco, anio:r.anio, cancion:r.cancion, texto:r.texto });
+      return true;
     });
-    phrases = base.concat(mine);
+  }
+  function keysOf(list){
+    var s = {};
+    list.forEach(function(p){ s[phraseKey(p)] = true; });
+    return s;
   }
 
   // ---------------- Helpers ----------------
@@ -1103,7 +1113,8 @@
     var el = document.getElementById("stats");
     el.textContent = "banco: " + phrases.length + " frase" + (phrases.length===1?"":"s") +
       " · " + DATA.redondos.short + ": " + phrases.filter(function(p){return p.banda==="redondos";}).length +
-      " · " + DATA.fundamentalistas.short + ": " + phrases.filter(function(p){return p.banda==="fundamentalistas";}).length;
+      " · " + DATA.fundamentalistas.short + ": " + phrases.filter(function(p){return p.banda==="fundamentalistas";}).length +
+      (drafts.length ? " · " + drafts.length + " pendiente" + (drafts.length===1?"":"s") + " de subir" : "");
   }
 
   // ---------------- Add-phrase sheet ----------------
@@ -1145,17 +1156,17 @@
   function renderBankList(){
     var list = document.getElementById("bankList");
     var count = document.getElementById("bankCount");
-    count.textContent = phrases.length + " frase" + (phrases.length===1?"":"s");
+    count.textContent = drafts.length + " frase" + (drafts.length===1?"":"s");
     list.innerHTML = "";
-    if(phrases.length===0){
+    if(drafts.length===0){
       var e = document.createElement("div");
       e.className = "bank-empty";
-      e.textContent = "Todavía no agregaste ninguna frase.";
+      e.textContent = "No hay frases pendientes: todo lo que está en el juego viene del repo.";
       list.appendChild(e);
       return;
     }
-    // most recently added first
-    phrases.slice().reverse().forEach(function(p){
+    // las más recientes primero
+    drafts.slice().reverse().forEach(function(p){
       var item = document.createElement("div");
       item.className = "bank-item";
       var txt = document.createElement("div");
@@ -1171,14 +1182,12 @@
       del.setAttribute("aria-label", "Borrar frase");
       del.textContent = "🗑";
       del.addEventListener("click", function(){
-        phrases = phrases.filter(function(x){ return x.id!==p.id; });
+        drafts = drafts.filter(function(x){ return x.id!==p.id; });
         savePhrases();
-        renderChips(); renderStats(); renderBankList();
-        if(!current || current.id===p.id){ nextPhrase(); }
-        else { renderCard(); }
+        renderStats(); renderBankList(); renderBackupText();
       });
       item.appendChild(txt);
-      if(!p.base) item.appendChild(del);   // las frases base vienen del repo: no se borran desde acá
+      item.appendChild(del);
       list.appendChild(item);
     });
   }
@@ -1220,19 +1229,15 @@
       var cancion = document.getElementById("selCancion").value;
       var texto = document.getElementById("txtFrase").value.trim();
       if(!texto){ showToast("Escribí la frase antes de guardar"); return; }
-      phrases.push({
-        id: uid(),
-        banda: banda,
-        disco: disco,
-        anio: albumObj ? albumObj.year : "",
-        cancion: cancion,
-        texto: texto
-      });
+      var nueva = { id: uid(), banda: banda, disco: disco, anio: albumObj ? albumObj.year : "", cancion: cancion, texto: texto };
+      var k = phraseKey(nueva);
+      if(keysOf(phrases)[k]){ showToast("Esa frase ya está en el juego"); return; }
+      if(keysOf(drafts)[k]){ showToast("Ya la cargaste: está pendiente de subir"); return; }
+      drafts.push(nueva);
       savePhrases();
       document.getElementById("txtFrase").value = "";
-      renderChips(); renderStats(); renderBankList();
-      showToast("Frase guardada");
-      if(!current) nextPhrase();
+      renderStats(); renderBankList(); renderBackupText();
+      showToast("Guardada como pendiente de subir");
     });
 
     document.getElementById("btnRevelar").addEventListener("click", function(){
@@ -1270,20 +1275,6 @@
       } else {
         showToast("Seleccionado — copiá con Ctrl/Cmd+C");
       }
-    });
-
-    document.getElementById("btnActualizar").addEventListener("click", function(){
-      var ta = document.getElementById("backupText");
-      var text = ta.value.trim();
-      if(!text){ showToast("Escribí o pegá el backup primero"); return; }
-      var rows = parseBackupTSV(text);
-      if(rows.length===0){ showToast("No encontré frases válidas en ese texto"); return; }
-      replacePhrasesFromRows(rows);
-      savePhrases();
-      refillBag();
-      nextPhrase();
-      renderChips(); renderStats(); renderBankList();
-      showToast("Banco actualizado: " + rows.length + " frase" + (rows.length===1?"":"s"));
     });
 
     document.addEventListener("keydown", function(e){
@@ -1688,18 +1679,15 @@
     try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 
     Promise.all([loadBasePhrases(), loadLocalPhrases()]).then(function(res){
-      var base = res[0];
-      // frases propias de este dispositivo, sin las que ya están en la base
+      // el juego usa solo el repo (sin repetidas)
       var seen = {};
-      base.forEach(function(p){ seen[phraseKey(p)] = true; });
-      var mine = res[1].filter(function(p){
-        if(!p || typeof p.texto !== "string" || !p.texto.trim()) return false;
-        var k = phraseKey(p);
-        if(seen[k]) return false;
-        seen[k] = true;
-        return true;
+      phrases = uniqueBy(res[0], seen);
+      // lo guardado en este navegador queda como pendiente, salvo lo que ya está en el repo
+      var stored = res[1] || [];
+      drafts = uniqueBy(stored, seen).map(function(p){
+        return { id:p.id || uid(), banda:p.banda, disco:p.disco, anio:p.anio, cancion:p.cancion, texto:p.texto };
       });
-      phrases = base.concat(mine);
+      if(drafts.length !== stored.length) savePhrases();   // limpiar lo que ya subió o estaba repetido
       refillBag();
       nextPhrase();
       renderChips();

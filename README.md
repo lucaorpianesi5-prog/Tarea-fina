@@ -33,9 +33,11 @@ Banda	Disco	Año	Canción	Frase
 
 Para agregar frases al juego de todos, editá ese archivo y subí el cambio.
 
-### Frases propias en cada dispositivo
+### Cargar frases nuevas desde la app
 
-Desde el botón **＋** de la app cualquiera puede sumar frases. Esas quedan **solo en su navegador**, no se suben a ningún lado. La misma pantalla tiene una caja de **backup** editable para copiar el banco completo o pegar uno de otro dispositivo (**Actualizar**). Las frases base del repo siempre se mantienen.
+El juego usa **solo** las frases de `data/frases.tsv`, así todos juegan con la misma base y sin repetidas.
+
+Desde el botón **＋** se pueden cargar frases nuevas: quedan como **pendientes** en ese navegador y todavía no aparecen en el juego. Si una frase ya está en el repo (o ya está pendiente), la app avisa y no la duplica. Para que entren al juego, tocá **Copiar** en la caja de backup (trae las del repo más las pendientes, sin repetidas) y pegalo en `data/frases.tsv` reemplazando todo. Cuando la app ve que ya están en el repo, las saca de pendientes sola.
 
 ## Desarrollo
 
