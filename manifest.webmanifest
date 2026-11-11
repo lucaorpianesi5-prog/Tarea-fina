@@ -1,0 +1,17 @@
+{
+  "name": "Tarea Fina",
+  "short_name": "Tarea Fina",
+  "description": "Adiviná de qué tema y de qué disco de Los Redondos y Los Fundamentalistas es cada frase.",
+  "lang": "es-AR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17120F",
+  "theme_color": "#17120F",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

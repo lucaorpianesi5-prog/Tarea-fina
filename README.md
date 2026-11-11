@@ -22,9 +22,13 @@ Antes de arrancar, en los modos con timer se personaliza la partida:
 - **Dificultad:** en **Fácil** errar no resta; en **Difícil** errar resta un punto.
 - **Fin de la partida:** sin final, **a puntos** (gana el primero que llega a 5, 10, 15 o 20) o **por frases** (se juegan 10, 20, 30 o 50 y gana el que tiene más puntos).
 
-Si alguien toca sin querer, se puede seguir corriendo el timer. Si se sale a la pantalla principal en medio de una partida, el botón pasa a ser **Seguir partida**, con la opción de empezar una nueva.
+Antes de cada frase hay una cuenta regresiva 3-2-1 en los dos lados de la pantalla, para que todos arranquen parejos. Las frases largas se achican solas para entrar completas. Si alguien toca sin querer, se puede seguir corriendo el timer. Si se sale a la pantalla principal en medio de una partida, el botón pasa a ser **Seguir partida**, con la opción de empezar una nueva.
 
 No se repite ninguna frase hasta agotar la ronda.
+
+## Como app en el celu
+
+Se puede instalar y funciona sin internet: en Android con el botón **Instalar como app** (o "Instalar app" en el menú del navegador), y en iPhone desde Safari con **Compartir → Agregar a inicio**. Con conexión, la app siempre trae la última versión de las frases; sin conexión, usa la última que guardó.
 
 ## Frases del juego
 

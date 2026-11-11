@@ -8,6 +8,11 @@
 <meta name="theme-color" content="#17120F">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tarea Fina">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Caveat:wght@600;700&family=Stardos+Stencil:wght@400;700&display=swap" rel="stylesheet">
@@ -463,6 +468,13 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
 
+  .install-btn{
+    align-self:center; font-family:'Space Mono', monospace; font-weight:700; font-size:12.5px;
+    background:transparent; color:var(--ocre); border:2px dashed var(--ocre); border-radius:4px;
+    padding:9px 14px; cursor:pointer;
+  }
+  .install-btn:hover{background:rgba(201,147,47,.1);}
+
   /* ---------- Bienvenida ---------- */
   .head-btns{display:flex; gap:8px; flex:0 0 auto;}
   .icon-help{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:20px;}
@@ -572,7 +584,14 @@
   body.mode-jugadores #setupPlayers{display:block;}
   body.mode-equipos .stage, body.mode-equipos .actions,
   body.mode-jugadores .stage, body.mode-jugadores .actions,
-  body.mode-jugadores .score{display:none;}
+  body.mode-jugadores .score, body.mode-equipos .score{display:none;}
+  .setup-score{
+    display:none; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
+    border:2px dashed var(--ocre); border-radius:8px; padding:10px; font-size:12.5px; color:var(--hueso-dim);
+  }
+  .setup-score.show{display:flex;}
+  .setup-score b{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:20px; margin-left:4px;}
+  .setup-score .a b{color:var(--ricota);} .setup-score .b b{color:var(--naranja);}
 
   /* ---------- Partida con timer ---------- */
   .game{
@@ -600,16 +619,18 @@
     font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:15px;
     text-transform:uppercase; letter-spacing:.08em; opacity:.8;
   }
+  /* el tamaño de letra lo ajusta fitPads() para que la frase entre completa */
   .pad-frase{
     margin:0; font-family:'Space Mono', monospace; font-weight:700; font-style:italic;
-    font-size:clamp(16px, 4.6vw, 24px); line-height:1.3; max-width:560px;
-    display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;
+    font-size:clamp(16px, 4.6vw, 24px); line-height:1.28; max-width:560px;
+    flex:0 1 auto; min-height:0; overflow:hidden; overflow-wrap:break-word; hyphens:manual;
   }
   .pad-frase::before{content:"“";} .pad-frase::after{content:"”";}
   .pad-solo .pad-frase{
     font-size:clamp(18px, 5.4vw, 30px); background:var(--paper); color:var(--grafito);
-    padding:22px 20px; transform:rotate(-1deg); clip-path:var(--torn); -webkit-line-clamp:7;
+    padding:22px 20px; transform:rotate(-1deg); clip-path:var(--torn);
   }
+  .pad-label, .pad-secs, .pad-bar, .pad-hint{flex:0 0 auto;}
   .pad-secs{font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:clamp(44px, 13vw, 80px); line-height:1;}
   .pad-solo .pad-secs{color:var(--ocre);}
   .pad-bar{width:min(80%, 420px); height:8px; background:rgba(23,18,15,.25); border-radius:4px; overflow:hidden;}
@@ -622,7 +643,14 @@
   .game.urgente .pad-a .pad-bar i, .game.urgente .pad-b .pad-bar i{background:var(--hueso);}
   .pad-hint{font-size:12px; opacity:.75;}
   .game[data-state="ready"] .pads{visibility:hidden;}
-  .game:not([data-state="running"]) .pads{filter:brightness(.35) saturate(.6);}
+  .game:not([data-state="running"]):not([data-state="countdown"]) .pads{filter:brightness(.35) saturate(.6);}
+  /* cuenta regresiva: número grande en cada lado, sin frase */
+  .game[data-state="countdown"] .pad-frase, .game[data-state="countdown"] .pad-bar,
+  .game[data-state="countdown"] .pad-hint{visibility:hidden;}
+  .game[data-state="countdown"] .pad-frase{position:absolute;}
+  .game[data-state="countdown"] .pad-secs{font-size:clamp(90px, 28vw, 170px);}
+  .game[data-state="countdown"] .pad-secs.pop{animation:cdPop .9s ease-out;}
+  @keyframes cdPop{0%{transform:scale(1.6); opacity:0;} 25%{transform:scale(1); opacity:1;} 100%{transform:scale(.92); opacity:.85;}}
   .pad.ganador{filter:none;}
 
   .game-exit{
@@ -631,14 +659,16 @@
     background:rgba(23,18,15,.75); color:var(--hueso); border:2px solid var(--hueso-dim); border-radius:3px;
     padding:6px 10px; cursor:pointer;
   }
-  .game.mode-equipos[data-state="running"] .game-exit{top:auto; bottom:10px;}
+  /* en Equipos, Salir va sobre la línea que divide las mitades: no tapa ni la frase ni la barra de ningún equipo */
+  .game.mode-equipos[data-state="running"] .game-exit,
+  .game.mode-equipos[data-state="countdown"] .game-exit{top:50%; bottom:auto; right:8px; transform:translateY(-50%); background:var(--ink);}
   .gpanel{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2;
     width:min(92vw, 420px); max-height:90vh; overflow-y:auto;
     background:var(--ink); border:2.5px solid var(--hueso-dim); border-radius:10px;
     padding:20px 18px; display:flex; flex-direction:column; gap:14px; text-align:center;
   }
-  .game[data-state="running"] .gpanel{display:none;}
+  .game[data-state="running"] .gpanel, .game[data-state="countdown"] .gpanel{display:none;}
   .gp-title{margin:0; font-family:'Stardos Stencil', 'Big Shoulders Display', sans-serif; font-weight:700; font-size:26px; text-transform:uppercase; letter-spacing:1px;}
   .gp-title.team-a{color:var(--ricota);} .gp-title.team-b{color:var(--naranja);} .gp-title.solo{color:var(--ocre);}
   .gp-text{margin:0; font-size:13.5px; line-height:1.5; color:var(--hueso-dim);}
@@ -724,6 +754,7 @@
         <button class="btn btn-secondary" type="submit">Sumar</button>
       </form>
     </div>
+    <div class="setup-score" id="setupScore"></div>
     <p class="setup-hint" id="setupHint"></p>
     <button class="btn btn-primary" id="btnStartGame">▶ Arrancar partida</button>
     <button class="score-reset" id="btnNewGame" type="button" hidden>Empezar una partida nueva (pone los puntos en 0)</button>
@@ -771,6 +802,7 @@
   </div>
 
   <div class="stats" id="stats"></div>
+  <button class="install-btn" id="btnInstall" type="button" hidden>📲 Instalar como app (anda sin internet)</button>
 
 </div>
 
@@ -864,6 +896,9 @@
       <dd>Igual que Equipos, pero con un solo pulsador para todos. Quien frena se marca en la lista y responde.</dd>
     </dl>
     <p class="welcome-note">En los modos con tiempo, antes de arrancar elijan cuánto dura cada frase, la dificultad (en <b>Difícil</b>, errar resta un punto) y cómo termina la partida: sin final, cuando alguien llega a cierta cantidad de puntos o después de cierta cantidad de frases. Si nadie frena antes de que termine el tiempo, se revela la respuesta y se pasa a la siguiente. Si alguien tocó sin querer, se puede seguir corriendo.</p>
+
+    <h3>Como app</h3>
+    <p class="welcome-note">Se puede instalar en el celu y funciona sin internet. En Android, tocá <b>Instalar como app</b> abajo de todo en la pantalla principal (o en el menú del navegador, "Instalar app"). En iPhone, desde Safari: <b>Compartir → Agregar a inicio</b>.</p>
 
     <label class="welcome-check"><input type="checkbox" id="welcomeHide"> No volver a mostrar al abrir</label>
     <button class="btn btn-primary" id="welcomeClose">A jugar</button>
@@ -1468,6 +1503,18 @@
       "Se juega hasta que quieran. Los puntos se van sumando.";
     var start = document.getElementById("btnStartGame");
     start.textContent = game.active ? "▶ Seguir partida" : "▶ Arrancar partida";
+    // puntaje de la partida en curso (en Jugadores ya se ve en la lista)
+    var ss = document.getElementById("setupScore");
+    ss.innerHTML = "";
+    ss.classList.toggle("show", game.active && prefs.mode==="equipos");
+    if(game.active && prefs.mode==="equipos"){
+      ss.appendChild(el("span", null, "Partida en curso:"));
+      [["a","Equipo A"],["b","Equipo B"]].forEach(function(t){
+        var s = el("span", t[0], t[1]);
+        s.appendChild(el("b", null, String(score[t[0]])));
+        ss.appendChild(s);
+      });
+    }
     document.getElementById("btnNewGame").hidden = !game.active;
     var hint = document.getElementById("setupHint");
     if(prefs.mode==="equipos"){
@@ -1577,7 +1624,13 @@
     game.round++;
     game.who = null;
     game.remaining = prefs.dur * 1000;
-    runTimer();
+    // 3-2-1 antes de mostrar la frase, para que todos arranquen parejos
+    game.state = "countdown";
+    game.cdEnd = performance.now() + 3000;
+    game.cdShown = null;
+    clearInterval(game.timer);
+    game.timer = setInterval(tick, 100);
+    renderGame();
   }
 
   function runTimer(){
@@ -1586,7 +1639,41 @@
     clearInterval(game.timer);
     game.timer = setInterval(tick, 100);
     renderGame();
+    fitPads();
     tick();
+  }
+
+  function countdownTick(){
+    var n = Math.ceil((game.cdEnd - performance.now()) / 1000);
+    if(n <= 0){ beep(660, 0.25); runTimer(); return; }
+    if(n !== game.cdShown){
+      game.cdShown = n;
+      gameEl().querySelectorAll(".pad-secs").forEach(function(s){
+        s.textContent = n;
+        s.classList.remove("pop"); void s.offsetWidth; s.classList.add("pop");
+      });
+      beep(440, 0.12);
+    }
+  }
+
+  // Achica la letra de la frase en cada pulsador hasta que entra completa.
+  function fitPads(){
+    var g = gameEl();
+    if(!g.classList.contains("open")) return;
+    g.querySelectorAll(".pad").forEach(function(pad){
+      if(window.getComputedStyle(pad).display==="none") return;
+      var inner = pad.querySelector(".pad-inner"), p = pad.querySelector(".pad-frase");
+      var H = inner.clientHeight, W = inner.clientWidth;
+      if(!H || !W) return;   // sin medidas (por ejemplo, oculto): no hay nada que ajustar
+      var solo = pad.classList.contains("pad-solo");
+      var size = Math.round(Math.min(solo ? 34 : 28, H / (solo ? 9 : 7), W / 14));
+      var min = 11;
+      p.style.fontSize = size + "px";
+      while(size > min && (inner.scrollHeight > inner.clientHeight + 1 || p.scrollHeight > p.clientHeight + 1)){
+        size -= 1;
+        p.style.fontSize = size + "px";
+      }
+    });
   }
 
   function timeLeft(){
@@ -1595,6 +1682,7 @@
   }
 
   function tick(){
+    if(game.state==="countdown"){ countdownTick(); return; }
     var left = timeLeft();
     var secs = Math.ceil(left / 1000);
     var pct = (left / (prefs.dur * 1000)) * 100;
@@ -1814,16 +1902,18 @@
     }
   }
 
-  function beep(){
+  // beep() = fin del tiempo; beep(freq, dur) = sonidos cortos de la cuenta regresiva
+  function beep(freq, dur){
     try{
       if(!actx) return;
       if(actx.state==="suspended") actx.resume();
+      freq = freq || 330; dur = dur || 0.6;
       var o = actx.createOscillator(), gn = actx.createGain();
-      o.type = "square"; o.frequency.value = 330;
-      gn.gain.setValueAtTime(0.12, actx.currentTime);
-      gn.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.6);
+      o.type = "square"; o.frequency.value = freq;
+      gn.gain.setValueAtTime(dur < 0.3 ? 0.07 : 0.12, actx.currentTime);
+      gn.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
       o.connect(gn); gn.connect(actx.destination);
-      o.start(); o.stop(actx.currentTime + 0.6);
+      o.start(); o.stop(actx.currentTime + dur);
     }catch(e){}
   }
 
@@ -1867,6 +1957,9 @@
     document.addEventListener("visibilitychange", function(){
       if(isGameOpen() && document.visibilityState==="visible") lockScreen();
     });
+    var fitT = null;
+    window.addEventListener("resize", function(){ clearTimeout(fitT); fitT = setTimeout(fitPads, 120); });
+    try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitPads); }catch(e){}
   }
 
   // ---------------- Bienvenida ----------------
@@ -1898,8 +1991,30 @@
     if(!hidden) openWelcome();
   }
 
+  // ---------------- App instalable / sin internet ----------------
+  function wireApp(){
+    if("serviceWorker" in navigator && location.protocol==="https:"){
+      window.addEventListener("load", function(){
+        navigator.serviceWorker.register("sw.js").catch(function(e){ console.warn("No se registró el service worker", e); });
+      });
+    }
+    var deferred = null, btnI = document.getElementById("btnInstall");
+    window.addEventListener("beforeinstallprompt", function(e){
+      e.preventDefault();      // mostramos nuestro botón en vez del cartel automático
+      deferred = e;
+      btnI.hidden = false;
+    });
+    btnI.addEventListener("click", function(){
+      if(!deferred) return;
+      deferred.prompt();
+      deferred.userChoice.then(function(){ deferred = null; btnI.hidden = true; }).catch(function(){});
+    });
+    window.addEventListener("appinstalled", function(){ btnI.hidden = true; showToast("Instalada: ya la tenés en el celu"); });
+  }
+
   // ---------------- Init ----------------
   function init(){
+    wireApp();
     wireWelcome();
     loadPrefs();
     wireGame();
